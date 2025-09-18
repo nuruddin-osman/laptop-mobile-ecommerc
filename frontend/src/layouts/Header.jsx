@@ -60,7 +60,7 @@ const Header = () => {
               className="text-2xl font-bold text-blue-600 flex items-center"
             >
               <FaBox className="mr-2" />
-              TechBazar
+              NuruddinTech
             </Link>
 
             {/* Search Bar - Desktop */}
@@ -69,7 +69,7 @@ const Header = () => {
                 <input
                   type="text"
                   name="search"
-                  placeholder="আপনি কী খুঁজছেন? (যেমন: iPhone, MacBook)"
+                  placeholder="What are you looking for? (Ex: iPhone, MacBook)"
                   className="w-full py-2 px-4 border border-gray-300 rounded-l-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -96,7 +96,7 @@ const Header = () => {
                   className="flex items-center text-gray-600 hover:text-blue-600"
                 >
                   <FaUser size={18} />
-                  <span className="ml-1">আমার অ্যাকাউন্ট</span>
+                  <span className="ml-1">My Account</span>
                 </button>
 
                 {isDropdownOpen && (
@@ -106,25 +106,25 @@ const Header = () => {
                       className=" px-4 py-2 text-gray-800 hover:bg-blue-100 hover:text-blue-600 flex items-center"
                       onClick={() => setIsDropdownOpen(false)}
                     >
-                      <FaUser className="mr-2" /> প্রোফাইল
+                      <FaUser className="mr-2" /> Profile
                     </Link>
                     <Link
                       to="/wishlist"
                       className=" px-4 py-2 text-gray-800 hover:bg-blue-100 hover:text-blue-600 flex items-center"
                       onClick={() => setIsDropdownOpen(false)}
                     >
-                      <FaHeart className="mr-2" /> উইশলিস্ট
+                      <FaHeart className="mr-2" /> Wishlist
                     </Link>
                     <Link
                       to="/orders"
                       className=" px-4 py-2 text-gray-800 hover:bg-blue-100 hover:text-blue-600 flex items-center"
                       onClick={() => setIsDropdownOpen(false)}
                     >
-                      <FaBox className="mr-2" /> অর্ডারসমূহ
+                      <FaBox className="mr-2" /> Orders
                     </Link>
                     <hr className="my-1" />
                     <button className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 flex items-center">
-                      <FaSignOutAlt className="mr-2" /> লগআউট
+                      <FaSignOutAlt className="mr-2" /> Logout
                     </button>
                   </div>
                 )}
@@ -178,37 +178,37 @@ const Header = () => {
           )}
 
           {/* Navigation Menu - Desktop */}
-          <nav className="hidden md:flex justify-center py-3 border-t border-gray-200">
+          <nav className="hidden md:flex justify-end py-3 border-t border-gray-200">
             <div className="flex space-x-8">
               <Link
                 to="/"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
-                হোম
+                Home
               </Link>
               <Link
                 to="/products"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
-                সকল প্রোডাক্ট
+                All products
               </Link>
               <Link
                 to="/products/laptops"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
-                ল্যাপটপ
+                Laptop
               </Link>
               <Link
                 to="/products/mobiles"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
-                মোবাইল
+                Mobile
               </Link>
               <Link
                 to="/about"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
-                আমাদের সম্পর্কে
+                About us
               </Link>
             </div>
           </nav>

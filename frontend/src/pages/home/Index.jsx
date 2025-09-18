@@ -1,6 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
+import Laptop_01 from "../../assets/images/laptop/laptop-img01.png";
+import Laptop_02 from "../../assets/images/laptop/laptop-img02.png";
+import Laptop_03 from "../../assets/images/laptop/laptop-img03.png";
+import Laptop_04 from "../../assets/images/laptop/laptop-img04.png";
+
+// Import Swiper styles and modules
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import "swiper/css/effect-fade";
+
+import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 
 const Home = () => {
   // Sample products data - in real app, this would come from API
@@ -12,7 +26,7 @@ const Home = () => {
       rating: 4.5,
       reviewCount: 132,
       description: "Powerful laptop for professionals with M2 Pro chip",
-      image: "https://via.placeholder.com/300x200?text=MacBook+Pro",
+      image: Laptop_01,
     },
     {
       id: 2,
@@ -21,7 +35,7 @@ const Home = () => {
       rating: 4.8,
       reviewCount: 245,
       description: "Latest iPhone with Dynamic Island and 48MP camera",
-      image: "https://via.placeholder.com/300x200?text=iPhone+14+Pro",
+      image: Laptop_02,
     },
     {
       id: 3,
@@ -30,7 +44,7 @@ const Home = () => {
       rating: 4.3,
       reviewCount: 87,
       description: "Ultra-thin laptop with InfinityEdge display",
-      image: "https://via.placeholder.com/300x200?text=Dell+XPS+13",
+      image: Laptop_03,
     },
     {
       id: 4,
@@ -39,28 +53,168 @@ const Home = () => {
       rating: 4.6,
       reviewCount: 156,
       description: "Android flagship with powerful camera system",
-      image: "https://via.placeholder.com/300x200?text=Galaxy+S23",
+      image: Laptop_04,
+    },
+  ];
+
+  // Hero slider data
+  const heroSlides = [
+    {
+      id: 1,
+      title: "Latest Tech Gadgets",
+      subtitle: "Discover the newest technology at amazing prices",
+      image:
+        Laptop_01 ||
+        "https://images.unsplash.com/photo-1498049794561-7780e7231661?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+      buttonText: "Shop Now",
+      buttonLink: "/products",
+      textColor: "text-white",
+      overlay: "bg-black bg-opacity-50",
+    },
+    {
+      id: 2,
+      title: "Summer Sale Up to 30% Off",
+      subtitle: "Special discounts on laptops and mobile phones",
+      image:
+        Laptop_02 ||
+        "https://images.unsplash.com/photo-1468436139062-f60a71c5c892?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+      buttonText: "View Offers",
+      buttonLink: "/products?discount=true",
+      textColor: "text-white",
+      overlay: "bg-blue-900 bg-opacity-60",
+    },
+    {
+      id: 3,
+      title: "Premium Quality Laptops",
+      subtitle: "Experience the power of next-generation computing",
+      image:
+        Laptop_03 ||
+        "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1442&q=80",
+      buttonText: "Explore Laptops",
+      buttonLink: "/products/laptops",
+      textColor: "text-white",
+      overlay: "bg-purple-900 bg-opacity-60",
+    },
+    {
+      id: 4,
+      title: "New Mobile Collection",
+      subtitle: "Latest smartphones with advanced features",
+      image:
+        Laptop_04 ||
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1480&q=80",
+      buttonText: "Browse Mobiles",
+      buttonLink: "/products/mobiles",
+      textColor: "text-white",
+      overlay: "bg-gray-900 bg-opacity-60",
     },
   ];
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="bg-blue-100 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Welcome to TechBazar
-          </h1>
-          <p className="text-xl mb-8">
-            Find the best laptops and mobile phones at amazing prices
-          </p>
-          <Link
-            to="/products"
-            className="bg-blue-600 text-white py-3 px-8 rounded-full text-lg font-semibold hover:bg-blue-700 transition-colors"
+      {/* Hero Section with Swiper Slider */}
+      <section className="relative h-[500px] md:h-[600px] lg:h-[700px]">
+        <Swiper
+          spaceBetween={0}
+          centeredSlides={true}
+          autoplay={{
+            delay: 5000,
+            disableOnInteraction: false,
+          }}
+          pagination={{
+            clickable: true,
+            dynamicBullets: true,
+          }}
+          navigation={{
+            nextEl: ".custom-next",
+            prevEl: ".custom-prev",
+          }}
+          effect={"fade"}
+          fadeEffect={{
+            crossFade: true,
+          }}
+          onInit={(swiper) => {
+            // when single slide then navigation disable
+            if (swiper.slides.length <= 1) {
+              swiper.navigation.disable();
+            }
+          }}
+          onSlideChange={(swiper) => {
+            // Beginning  disable prev
+            if (swiper.isBeginning) {
+              swiper.navigation.prevEl.classList.add(
+                "opacity-50",
+                "pointer-events-none"
+              );
+            } else {
+              swiper.navigation.prevEl.classList.remove(
+                "opacity-50",
+                "pointer-events-none"
+              );
+            }
+
+            // End  disable next
+            if (swiper.isEnd) {
+              swiper.navigation.nextEl.classList.add(
+                "opacity-50",
+                "pointer-events-none"
+              );
+            } else {
+              swiper.navigation.nextEl.classList.remove(
+                "opacity-50",
+                "pointer-events-none"
+              );
+            }
+          }}
+          modules={[Autoplay, Pagination, Navigation, EffectFade]}
+          className="h-full w-full"
+        >
+          {heroSlides.map((slide) => (
+            <SwiperSlide key={slide.id} className="relative h-full">
+              <div className={`absolute inset-0 ${slide.overlay} z-10`}></div>
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 z-20 flex items-center">
+                <div className="container mx-auto px-4 text-center">
+                  <h1
+                    className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-4 ${slide.textColor}`}
+                  >
+                    {slide.title}
+                  </h1>
+                  <p
+                    className={`text-xl md:text-2xl mb-8 max-w-2xl mx-auto ${slide.textColor}`}
+                  >
+                    {slide.subtitle}
+                  </p>
+                  <Link
+                    to={slide.buttonLink}
+                    className="inline-block bg-blue-600 text-white py-3 px-8 rounded-full text-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    {slide.buttonText}
+                  </Link>
+                </div>
+              </div>
+            </SwiperSlide>
+          ))}
+
+          {/* custom buttons */}
+          <div
+            className="custom-prev absolute top-1/2 left-2 -translate-y-1/2 
+                      flex items-center justify-center w-10 h-10 sm:w-6 sm:h-6 
+                      rounded-full shadow cursor-pointer z-50"
           >
-            Shop Now
-          </Link>
-        </div>
+            <FaAngleLeft className="!w-8 !h-8 sm:!w-12 sm:!h-12 text-white" />
+          </div>
+          <div
+            className="custom-next absolute top-1/2 right-2 -translate-y-1/2 
+                      flex items-center justify-center w-10 h-10 sm:w-6 sm:h-6 
+                      rounded-full shadow cursor-pointer z-50"
+          >
+            <FaAngleRight className="!w-8 !h-8 sm:w-!12 sm:!h-12 text-white" />
+          </div>
+        </Swiper>
       </section>
 
       {/* Featured Products */}
