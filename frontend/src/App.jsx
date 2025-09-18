@@ -6,6 +6,7 @@ import Products from "./pages/products/Index";
 import ProductDetails from "./pages/productDetails/Index";
 import Cart from "./pages/productCartPage/Index";
 import Checkout from "./pages/checkout/Index";
+import AccountPage from "./pages/account/Index";
 
 const App = () => {
   let router = createBrowserRouter([
@@ -36,6 +37,10 @@ const App = () => {
         {
           path: "/checkout",
           element: <Checkout />,
+        },
+        {
+          path: "/account",
+          element: <AccountPage />,
         },
       ],
     },
