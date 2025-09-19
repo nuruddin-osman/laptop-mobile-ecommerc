@@ -82,6 +82,6 @@ productSchema.index({
   brand: 1,
 });
 
-const Product = mongoose.model("Product", productSchema);
+const Product = mongoose.model("Front_product", productSchema);
 
 module.exports = Product;
