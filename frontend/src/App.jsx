@@ -8,6 +8,7 @@ import Cart from "./pages/productCartPage/Index";
 import Checkout from "./pages/checkout/Index";
 import AccountPage from "./pages/account/Index";
 import AboutPage from "./pages/about/Index";
+import ContactPage from "./pages/contact/Index";
 
 const App = () => {
   let router = createBrowserRouter([
@@ -46,6 +47,10 @@ const App = () => {
         {
           path: "/about",
           element: <AboutPage />,
+        },
+        {
+          path: "/contact",
+          element: <ContactPage />,
         },
       ],
     },

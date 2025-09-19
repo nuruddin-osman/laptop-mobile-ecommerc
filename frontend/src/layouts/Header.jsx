@@ -210,6 +210,12 @@ const Header = () => {
               >
                 About us
               </Link>
+              <Link
+                to="/contact"
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+              >
+                Contact
+              </Link>
             </div>
           </nav>
         </div>
