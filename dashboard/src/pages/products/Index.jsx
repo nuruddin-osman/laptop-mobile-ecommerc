@@ -20,14 +20,13 @@ import axios from "axios";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(10);
+  const [priceRange, setPriceRange] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -78,9 +77,9 @@ const Products = () => {
         value: Number(formData.rating.value),
         count: Number(formData.rating.count),
       },
-      // description field টি ensure করুন
+
       description: formData.description || "",
-      // warranty field টি ensure করুন
+
       warranty: formData.warranty || "1 year",
     };
   };
@@ -117,34 +116,6 @@ const Products = () => {
     }));
   };
 
-  // Filter and sort products
-  useEffect(() => {
-    let result = [...products];
-
-    // Apply search filter
-    if (searchTerm) {
-      result = result.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.category.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply category filter
-    if (categoryFilter !== "all") {
-      result = result.filter((product) => product.category === categoryFilter);
-    }
-
-    // Apply status filter
-    if (statusFilter !== "all") {
-      result = result.filter((product) => product.status === statusFilter);
-    }
-
-    setFilteredProducts(result);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [products, searchTerm, categoryFilter, statusFilter, sortBy]);
-
   // Stats data
   const stats = {
     totalProducts: products.length,
@@ -165,10 +136,48 @@ const Products = () => {
     });
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async ({
+    searchTerm = "",
+    categoryFilter,
+    statusFilter,
+    brandFilter = "all",
+    priceRange = "all",
+  }) => {
     try {
+      let minPrice, maxPrice;
+      switch (priceRange) {
+        case "0-500":
+          minPrice = 0;
+          maxPrice = 500;
+          break;
+        case "500-1000":
+          minPrice = 500;
+          maxPrice = 1000;
+          break;
+        case "1000-1500":
+          minPrice = 1000;
+          maxPrice = 1500;
+          break;
+        case "1500+":
+          minPrice = 1500;
+          maxPrice = null;
+          break;
+        default:
+          minPrice = null;
+          maxPrice = null;
+      }
       const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product`
+        `http://localhost:4000/api/dashboard/product`,
+        {
+          params: {
+            search: searchTerm,
+            category: categoryFilter,
+            status: statusFilter,
+            brand: brandFilter,
+            minPrice: minPrice,
+            maxPrice: maxPrice,
+          },
+        }
       );
       if (response.data) {
         console.log(response.data.data);
@@ -179,9 +188,31 @@ const Products = () => {
     }
   };
 
+  //Frist time load
   useEffect(() => {
-    fetchProducts();
+    fetchProducts({
+      searchTerm,
+      categoryFilter,
+      statusFilter,
+      brandFilter,
+      priceRange,
+    });
   }, []);
+
+  //Every term change
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts({
+        searchTerm,
+        categoryFilter,
+        statusFilter,
+        brandFilter,
+        priceRange,
+      });
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, categoryFilter, statusFilter, brandFilter, priceRange]);
+
   // Handle add product
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -193,13 +224,22 @@ const Products = () => {
           `http://localhost:4000/api/dashboard/product/${editingProduct._id}`,
           normalizedData
         );
-        console.log(response.data.data);
+        if (response.data) {
+          alert(`Error: ${response.data.message}`);
+        } else {
+          alert("An error occurred while saving the product");
+        }
       } else {
         const normalizedData = normalizeProductData(formData);
         const response = await axios.post(
           `http://localhost:4000/api/dashboard/product`,
           normalizedData
         );
+        if (response.data) {
+          alert(`Error: ${response.data.message}`);
+        } else {
+          alert("An error occurred while saving the product");
+        }
       }
       setIsModalOpen(false);
       setFormData({
@@ -229,19 +269,10 @@ const Products = () => {
       });
     } catch (error) {
       console.log(error);
-
-      // Validation errors show করুন user কে
-      if (error.response?.data?.message) {
-        alert(`Error: ${error.response.data.message}`);
-      } else {
-        alert("An error occurred while saving the product");
-      }
     }
   };
 
   const handleEdit = (product) => {
-    console.log(product);
-
     setFormData({
       name: product.name || "",
       brand: product.brand || "",
@@ -271,10 +302,19 @@ const Products = () => {
     setIsModalOpen(true);
   };
   // Handle delete product
-  const handleDeleteProduct = (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      const updatedProducts = products.filter((product) => product._id !== id);
-      setProducts(updatedProducts);
+  const handleDeleteProduct = async (id) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:4000/api/dashboard/product/${id}`
+      );
+      if (response.data) {
+        alert("Delete success");
+        fetchProducts("");
+      } else {
+        alert("Delete failed");
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -454,12 +494,19 @@ const Products = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Brand
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={brandFilter}
+                    onChange={(e) => setBrandFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="all">All Brands</option>
-                    <option value="apple">Apple</option>
-                    <option value="samsung">Samsung</option>
-                    <option value="dell">Dell</option>
-                    <option value="hp">HP</option>
+                    <option value="Apple">Apple</option>
+                    <option value="Samsung">Samsung</option>
+                    <option value="Dell">Dell</option>
+                    <option value="Hp">HP</option>
+                    <option value="Oppo">Oppo</option>
+                    <option value="Redmi">Redmi</option>
+                    <option value="Motorola">Motorola</option>
                   </select>
                 </div>
 
@@ -467,7 +514,11 @@ const Products = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Price Range
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={priceRange}
+                    onChange={(e) => setPriceRange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="all">All Prices</option>
                     <option value="0-500">$0 - $500</option>
                     <option value="500-1000">$500 - $1000</option>
@@ -497,6 +548,9 @@ const Products = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Stock
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Brand
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Sales
@@ -537,6 +591,9 @@ const Products = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {product.stock}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {product.brand}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {product.sales}
@@ -642,14 +699,21 @@ const Products = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Brand <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          type="text"
+                        <select
                           name="brand"
                           value={formData.brand}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="Enter brand name"
-                        />
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
+                        >
+                          <option value="">Select Brand</option>
+                          <option value="Apple">Apple</option>
+                          <option value="Samsung">Samsung</option>
+                          <option value="Dell">Dell</option>
+                          <option value="Hp">HP</option>
+                          <option value="Oppo">Oppo</option>
+                          <option value="Redmi">Redmi</option>
+                          <option value="Motorola">Motorola</option>
+                        </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
