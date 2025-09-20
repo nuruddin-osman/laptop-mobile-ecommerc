@@ -16,11 +16,12 @@ import {
   FaTimes,
   FaCheck,
 } from "react-icons/fa";
+import axios from "axios";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -28,92 +29,93 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
-  // Form state
+  // Form state এ description field যোগ করুন
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
-    category: "",
+    category: "laptops",
     price: "",
-    stock: "",
     description: "",
+    tags: [],
+    rating: {
+      value: "",
+      count: "",
+    },
+    stock: "",
+    discount: {
+      percentage: 0,
+      expiresAt: "",
+    },
     status: "active",
+    weight: 0,
+    dimensions: {
+      length: 0,
+      width: 0,
+      height: 0,
+    },
+    warranty: "",
   });
 
-  // Sample data - in real app, this would come from API
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const sampleProducts = [
-        {
-          _id: "1",
-          name: "MacBook Pro 16",
-          brand: "Apple",
-          category: "laptops",
-          price: 2399,
-          stock: 15,
-          sales: 120,
-          status: "active",
-          description: "High-performance laptop for professionals",
-          createdAt: "2023-01-15",
-        },
-        {
-          _id: "2",
-          name: "iPhone 14 Pro",
-          brand: "Apple",
-          category: "mobiles",
-          price: 999,
-          stock: 0,
-          sales: 250,
-          status: "out-of-stock",
-          description: "Latest iPhone with advanced camera",
-          createdAt: "2023-02-10",
-        },
-        {
-          _id: "3",
-          name: "Galaxy S23",
-          brand: "Samsung",
-          category: "mobiles",
-          price: 799,
-          stock: 8,
-          sales: 180,
-          status: "low-stock",
-          description: "Powerful Android smartphone",
-          createdAt: "2023-03-05",
-        },
-        {
-          _id: "4",
-          name: "XPS 13",
-          brand: "Dell",
-          category: "laptops",
-          price: 1299,
-          stock: 20,
-          sales: 95,
-          status: "active",
-          description: "Ultra-thin premium laptop",
-          createdAt: "2023-01-25",
-        },
-        {
-          _id: "5",
-          name: "AirPods Pro",
-          brand: "Apple",
-          category: "accessories",
-          price: 249,
-          stock: 35,
-          sales: 300,
-          status: "active",
-          description: "Wireless noise cancelling earbuds",
-          createdAt: "2023-02-18",
-        },
-      ];
-      setProducts(sampleProducts);
-      setFilteredProducts(sampleProducts);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const normalizeProductData = (formData) => {
+    return {
+      ...formData,
+      price: Number(formData.price),
+      stock: Number(formData.stock),
+      weight: Number(formData.weight),
+      discount: {
+        ...formData.discount,
+        percentage: Number(formData.discount.percentage),
+      },
+      dimensions: {
+        length: Number(formData.dimensions.length),
+        width: Number(formData.dimensions.width),
+        height: Number(formData.dimensions.height),
+      },
+      rating: {
+        value: Number(formData.rating.value),
+        count: Number(formData.rating.count),
+      },
+      // description field টি ensure করুন
+      description: formData.description || "",
+      // warranty field টি ensure করুন
+      warranty: formData.warranty || "1 year",
+    };
+  };
+
+  const handleTagsChange = (e) => {
+    const value = e.target.value;
+    const tagsArray = value.split(",").map((tag) => tag.trim());
+    setFormData((prev) => ({
+      ...prev,
+      tags: tagsArray,
+    }));
+  };
+
+  const handleDiscountChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      discount: {
+        ...prev.discount,
+        [name]: value,
+      },
+    }));
+  };
+
+  const handleRatingChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      rating: {
+        ...prev.rating,
+        [name]: Number(value),
+      },
+    }));
+  };
 
   // Filter and sort products
   useEffect(() => {
@@ -167,18 +169,6 @@ const Products = () => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [products, searchTerm, categoryFilter, statusFilter, sortBy]);
 
-  // Get current products
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
   // Stats data
   const stats = {
     totalProducts: products.length,
@@ -199,68 +189,89 @@ const Products = () => {
     });
   };
 
-  // Open add modal
-  const openAddModal = () => {
-    setFormData({
-      name: "",
-      brand: "",
-      category: "",
-      price: "",
-      stock: "",
-      description: "",
-      status: "active",
-    });
-    setShowAddModal(true);
-  };
-
-  // Open edit modal
-  const openEditModal = (product) => {
-    setCurrentProduct(product);
-    setFormData({
-      name: product.name,
-      brand: product.brand,
-      category: product.category,
-      price: product.price,
-      stock: product.stock,
-      description: product.description || "",
-      status: product.status,
-    });
-    setShowEditModal(true);
-  };
-
   // Handle add product
-  const handleAddProduct = () => {
-    const newProduct = {
-      _id: Date.now().toString(),
-      ...formData,
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stock),
-      sales: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const normalizedData = normalizeProductData(formData);
+      const response = await axios.post(
+        `http://localhost:4000/api/dashboard/product`,
+        normalizedData
+      );
 
-    setProducts([...products, newProduct]);
-    setShowAddModal(false);
+      console.log(response);
+      if (response.data.success) {
+        setIsModalOpen(false);
+        setFormData({
+          name: "",
+          brand: "",
+          category: "laptops",
+          price: "",
+          description: "",
+          tags: [],
+          rating: {
+            value: "",
+            count: "",
+          },
+          stock: "",
+          discount: {
+            percentage: 0,
+            expiresAt: "",
+          },
+          status: "active",
+          weight: 0,
+          dimensions: {
+            length: 0,
+            width: 0,
+            height: 0,
+          },
+          warranty: "",
+        });
+
+        // Products refresh করুন (যদি প্রয়োজন হয়)
+        // fetchProducts();
+      }
+    } catch (error) {
+      console.log(error);
+
+      // Validation errors show করুন user কে
+      if (error.response?.data?.message) {
+        alert(`Error: ${error.response.data.message}`);
+      } else {
+        alert("An error occurred while saving the product");
+      }
+    }
   };
 
-  // Handle edit product
-  const handleEditProduct = () => {
-    const updatedProducts = products.map((product) =>
-      product._id === currentProduct._id
-        ? {
-            ...product,
-            ...formData,
-            price: parseFloat(formData.price),
-            stock: parseInt(formData.stock),
-          }
-        : product
-    );
-
-    setProducts(updatedProducts);
-    setShowEditModal(false);
-    setCurrentProduct(null);
+  const handleEdit = (product) => {
+    setFormData({
+      name: product.name || "",
+      brand: product.brand || "",
+      category: product.category || "laptops",
+      price: product.price || "",
+      description: product.description || "",
+      tags: product.tags || [],
+      rating: {
+        value: product.rating?.value || "",
+        count: product.rating?.count || "",
+      },
+      stock: product.stock || "",
+      discount: {
+        percentage: product.discount?.percentage || 0,
+        expiresAt: product.discount?.expiresAt || "",
+      },
+      status: product.status || "active",
+      weight: product.weight || 0,
+      dimensions: {
+        length: product.dimensions?.length || 0,
+        width: product.dimensions?.width || 0,
+        height: product.dimensions?.height || 0,
+      },
+      warranty: product.warranty || "",
+    });
+    setEditingProduct(product);
+    setIsModalOpen(true);
   };
-
   // Handle delete product
   const handleDeleteProduct = (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
@@ -396,7 +407,7 @@ const Products = () => {
               </select>
 
               <button
-                onClick={openAddModal}
+                onClick={() => setIsModalOpen(true)}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 <FaPlus className="mr-2" />
@@ -501,7 +512,7 @@ const Products = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentProducts.map((product) => (
+                {products.map((product) => (
                   <tr key={product._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -555,7 +566,7 @@ const Products = () => {
                           <FaEye />
                         </button>
                         <button
-                          onClick={() => openEditModal(product)}
+                          onClick={() => handleEdit(product)}
                           className="text-green-600 hover:text-green-900"
                         >
                           <FaEdit />
@@ -573,493 +584,431 @@ const Products = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing{" "}
-                    <span className="font-medium">
-                      {indexOfFirstProduct + 1}
-                    </span>{" "}
-                    to{" "}
-                    <span className="font-medium">
-                      {Math.min(indexOfLastProduct, filteredProducts.length)}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium">
-                      {filteredProducts.length}
-                    </span>{" "}
-                    results
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (number) => (
-                        <button
-                          key={number}
-                          onClick={() => paginate(number)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            currentPage === number
-                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                          }`}
-                        >
-                          {number}
-                        </button>
-                      )
-                    )}
-                  </nav>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Add or Edit Product Modal */}
-        {(showAddModal || showEditModal) && (
+        {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                <div className="flex items-center">
-                  <div className="p-3 bg-blue-100 rounded-lg mr-4">
-                    {showAddModal ? (
-                      <FaPlus className="text-blue-600 text-xl" />
-                    ) : (
-                      <FaEdit className="text-blue-600 text-xl" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">
-                      {showAddModal ? "Add New Product" : "Edit Product"}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {showAddModal
-                        ? "Add a new product to your inventory"
-                        : "Update product information"}
-                    </p>
-                  </div>
-                </div>
+              <div className="flex justify-between items-center pb-3 border-b">
+                <h3 className="text-xl font-semibold text-gray-800 font-open-sans">
+                  {editingProduct ? "Edit Product" : "Add New Product"}
+                </h3>
                 <button
                   onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
+                    setIsModalOpen(false);
                   }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                  className="text-gray-500 hover:text-gray-700"
                 >
-                  <FaTimes className="text-lg" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
                 </button>
               </div>
 
               {/* Form Content */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column - Basic Information */}
-                  <div className="space-y-5">
-                    <h4 className="font-semibold text-gray-700 border-b pb-2">
-                      Basic Information
-                    </h4>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Product Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Enter product name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        SKU <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="sku"
-                        value={formData.sku}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="e.g., PROD-12345"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Brand <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="brand"
-                        value={formData.brand}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Enter brand name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Category <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          name="category"
-                          value={formData.category}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
-                        >
-                          <option value="">Select Category</option>
-                          <option value="laptops">Laptops</option>
-                          <option value="mobiles">Mobiles</option>
-                          <option value="accessories">Accessories</option>
-                          <option value="tablets">Tablets</option>
-                          <option value="wearables">Wearables</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
-                          <FaSort />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Rating
-                      </label>
-                      <div className="flex items-center">
-                        <div className="flex text-yellow-400 mr-2">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() =>
-                                setFormData({ ...formData, rating: star })
-                              }
-                              className="text-xl focus:outline-none"
-                            >
-                              {star <= formData.rating ? "★" : "☆"}
-                            </button>
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          ({formData.rating}/5)
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tags
-                      </label>
-                      <input
-                        type="text"
-                        name="tags"
-                        value={formData.tags}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="e.g., electronics, premium, wireless"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Separate tags with commas
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right Column - Pricing & Details */}
-                  <div className="space-y-5">
-                    <h4 className="font-semibold text-gray-700 border-b pb-2">
-                      Pricing & Details
-                    </h4>
-
-                    <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column - Basic Information */}
+                    <div className="space-y-5">
+                      <h4 className="font-semibold text-gray-700 border-b pb-2">
+                        Basic Information
+                      </h4>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Price ($) <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500">$</span>
-                          </div>
-                          <input
-                            type="number"
-                            name="price"
-                            value={formData.price}
-                            onChange={handleInputChange}
-                            className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="0.00"
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Discount (%)
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500">%</span>
-                          </div>
-                          <input
-                            type="number"
-                            name="discount"
-                            value={formData.discount}
-                            onChange={handleInputChange}
-                            className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="0"
-                            min="0"
-                            max="100"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Stock <span className="text-red-500">*</span>
+                          Product Name <span className="text-red-500">*</span>
                         </label>
                         <input
-                          type="number"
-                          name="stock"
-                          value={formData.stock}
+                          type="text"
+                          name="name"
+                          value={formData.name}
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="0"
-                          min="0"
+                          placeholder="Enter product name"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Weight (kg)
+                          Brand <span className="text-red-500">*</span>
                         </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            name="weight"
-                            value={formData.weight}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="0.0"
-                            min="0"
-                            step="0.1"
-                          />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500">kg</span>
-                          </div>
-                        </div>
+                        <input
+                          type="text"
+                          name="brand"
+                          value={formData.brand}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="Enter brand name"
+                        />
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Warranty
+                          Category <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <select
-                            name="warranty"
-                            value={formData.warranty}
+                            name="category"
+                            value={formData.category}
                             onChange={handleInputChange}
                             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
                           >
-                            <option value="">Select Warranty</option>
-                            <option value="no-warranty">No Warranty</option>
-                            <option value="30-days">30 Days</option>
-                            <option value="3-months">3 Months</option>
-                            <option value="6-months">6 Months</option>
-                            <option value="1-year">1 Year</option>
-                            <option value="2-years">2 Years</option>
-                            <option value="lifetime">Lifetime</option>
+                            <option value="">Select Category</option>
+                            <option value="laptops">Laptops</option>
+                            <option value="mobiles">Mobiles</option>
+                            <option value="accessories">Accessories</option>
+                            <option value="tablets">Tablets</option>
+                            <option value="wearables">Wearables</option>
                           </select>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
                             <FaSort />
                           </div>
                         </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Rating
+                          </label>
+                          <div className="">
+                            <input
+                              type="number"
+                              name="value"
+                              placeholder="Rating Value"
+                              value={formData.rating.value}
+                              onChange={handleRatingChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Count
+                          </label>
+                          <div className="">
+                            <input
+                              type="number"
+                              name="count"
+                              placeholder="Rating Count"
+                              value={formData.rating.count}
+                              onChange={handleRatingChange}
+                              className="w-full  px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tags
+                        </label>
+                        <input
+                          type="text"
+                          name="tags"
+                          onChange={handleTagsChange}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="e.g., electronics, premium, wireless"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Separate tags with commas
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Pricing & Details */}
+                    <div className="space-y-5">
+                      <h4 className="font-semibold text-gray-700 border-b pb-2">
+                        Pricing & Details
+                      </h4>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Price ($) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500">$</span>
+                            </div>
+                            <input
+                              type="number"
+                              name="price"
+                              value={formData.price}
+                              onChange={handleInputChange}
+                              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Discount (%)
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500">%</span>
+                            </div>
+                            <input
+                              type="number"
+                              name="percentage"
+                              value={formData.discount.percentage}
+                              onChange={handleDiscountChange}
+                              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="0"
+                            />
+                            <input
+                              type="date"
+                              name="expiresAt"
+                              value={formData.discount.expiresAt}
+                              onChange={handleDiscountChange}
+                              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Stock <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            name="stock"
+                            value={formData.stock}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            placeholder="0"
+                            min="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Weight (kg)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              name="weight"
+                              value={formData.weight}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="0.0"
+                              min="0"
+                              step="0.1"
+                            />
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500">kg</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Warranty
+                          </label>
+                          <div className="relative">
+                            <select
+                              name="warranty"
+                              value={formData.warranty || ""}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
+                            >
+                              <option value="">Select Warranty</option>
+                              <option value="no-warranty">No Warranty</option>
+                              <option value="30-days">30 Days</option>
+                              <option value="3-months">3 Months</option>
+                              <option value="6-months">6 Months</option>
+                              <option value="1-year">1 Year</option>
+                              <option value="2-years">2 Years</option>
+                              <option value="lifetime">Lifetime</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                              <FaSort />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Status
+                          </label>
+                          <div className="relative">
+                            <select
+                              name="status"
+                              value={formData.status}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
+                            >
+                              <option value="active">Active</option>
+                              <option value="out-of-stock">Out of Stock</option>
+                              <option value="low-stock">Low Stock</option>
+                              <option value="discontinued">Discontinued</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                              <FaSort />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Status
+                          Dimensions (L × W × H)
                         </label>
-                        <div className="relative">
-                          <select
-                            name="status"
-                            value={formData.status}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
-                          >
-                            <option value="active">Active</option>
-                            <option value="out-of-stock">Out of Stock</option>
-                            <option value="low-stock">Low Stock</option>
-                            <option value="discontinued">Discontinued</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
-                            <FaSort />
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="relative">
+                            <input
+                              type="number"
+                              name="length"
+                              value={formData.dimensions?.length || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  dimensions: {
+                                    ...formData.dimensions,
+                                    length: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="Length"
+                              min="0"
+                              step="0.1"
+                            />
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 text-xs">cm</span>
+                            </div>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              name="width"
+                              value={formData.dimensions?.width || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  dimensions: {
+                                    ...formData.dimensions,
+                                    width: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="Width"
+                              min="0"
+                              step="0.1"
+                            />
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 text-xs">cm</span>
+                            </div>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              name="height"
+                              value={formData.dimensions?.height || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  dimensions: {
+                                    ...formData.dimensions,
+                                    height: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              placeholder="Height"
+                              min="0"
+                              step="0.1"
+                            />
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 text-xs">cm</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Dimensions (L × W × H)
-                      </label>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="relative">
-                          <input
-                            type="number"
-                            name="length"
-                            value={formData.dimensions?.length || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                dimensions: {
-                                  ...formData.dimensions,
-                                  length: e.target.value,
-                                },
-                              })
-                            }
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Length"
-                            min="0"
-                            step="0.1"
-                          />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500 text-xs">cm</span>
-                          </div>
-                        </div>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            name="width"
-                            value={formData.dimensions?.width || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                dimensions: {
-                                  ...formData.dimensions,
-                                  width: e.target.value,
-                                },
-                              })
-                            }
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Width"
-                            min="0"
-                            step="0.1"
-                          />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500 text-xs">cm</span>
-                          </div>
-                        </div>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            name="height"
-                            value={formData.dimensions?.height || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                dimensions: {
-                                  ...formData.dimensions,
-                                  height: e.target.value,
-                                },
-                              })
-                            }
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Height"
-                            min="0"
-                            step="0.1"
-                          />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500 text-xs">cm</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Description
-                      </label>
-                      <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows="3"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Describe the product features and specifications..."
-                      ></textarea>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Product Image
-                      </label>
-                      <div className="flex items-center justify-center w-full">
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <FaPlus className="w-8 h-8 mb-3 text-gray-400" />
-                            <p className="mb-2 text-sm text-gray-500">
-                              Click to upload image
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              SVG, PNG, JPG or GIF (MAX. 5MB)
-                            </p>
-                          </div>
-                          <input type="file" className="hidden" />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description
                         </label>
+                        <textarea
+                          name="description"
+                          value={formData.description}
+                          onChange={handleInputChange}
+                          rows="3"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="Describe the product features and specifications..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Product Image
+                        </label>
+                        <div className="flex items-center justify-center w-full">
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <FaPlus className="w-8 h-8 mb-3 text-gray-400" />
+                              <p className="mb-2 text-sm text-gray-500">
+                                Click to upload image
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                SVG, PNG, JPG or GIF (MAX. 5MB)
+                              </p>
+                            </div>
+                            <input type="file" className="hidden" />
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Footer */}
-              <div className="flex justify-between items-center p-6 border-t border-gray-100 bg-gray-50">
-                <div className="text-sm text-gray-500">
-                  Fields marked with <span className="text-red-500">*</span> are
-                  required
+                {/* Footer */}
+                <div className="flex justify-between items-center p-6 border-t border-gray-100 bg-gray-50">
+                  <div className="text-sm text-gray-500">
+                    Fields marked with <span className="text-red-500">*</span>{" "}
+                    are required
+                  </div>
+                  <div className="flex justify-end pt-4 border-t">
+                    <button
+                      type="button"
+                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg mr-3 transition-colors"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setEditingProduct(null);
+                      }}
+                    >
+                      বাতিল
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      {editingProduct ? "আপডেট করুন" : "যোগ করুন"}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => {
-                      setShowAddModal(false);
-                      setShowEditModal(false);
-                    }}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={
-                      showAddModal ? handleAddProduct : handleEditProduct
-                    }
-                    className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium flex items-center"
-                  >
-                    {showAddModal ? (
-                      <>
-                        <FaPlus className="mr-2" />
-                        Add Product
-                      </>
-                    ) : (
-                      <>
-                        <FaCheck className="mr-2" />
-                        Update Product
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+              </form>
             </div>
           </div>
         )}
