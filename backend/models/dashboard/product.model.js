@@ -34,18 +34,18 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product brand is required"],
       trim: true,
     },
-    images: [
-      {
-        url: {
-          type: String,
-          required: true,
-        },
-        alt: {
-          type: String,
-          default: "",
-        },
-      },
-    ],
+    // images: [
+    //   {
+    //     url: {
+    //       type: String,
+    //       required: true,
+    //     },
+    //     alt: {
+    //       type: String,
+    //       default: "",
+    //     },
+    //   },
+    // ],
     stock: {
       type: Number,
       required: true,

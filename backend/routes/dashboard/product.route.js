@@ -2,7 +2,75 @@ const express = require("express");
 const Product = require("../../models/dashboard/product.model");
 const router = express.Router();
 
-// // Get all products with filtering, sorting, and pagination
+// // Get all products with filtering, sorting,
+
+// GET all products with search, filter, and pagination
+router.get("/", async (req, res) => {
+  try {
+    const {
+      search,
+      category,
+      brand,
+      status,
+      minPrice,
+      maxPrice,
+      sortBy,
+      sortOrder = "desc",
+    } = req.query;
+
+    // Build filter object
+    let filter = {};
+
+    // Search by product name
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
+    }
+
+    // Filter by category
+    if (category && category !== "all") {
+      filter.category = category;
+    }
+
+    // Filter by brand
+    if (brand && brand !== "all") {
+      filter.brand = brand;
+    }
+
+    // Filter by status
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+
+    // Filter by price range
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    // Sort options
+    let sortOptions = {};
+    if (sortBy) {
+      sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+    } else {
+      sortOptions.createdAt = -1; // Default sort by newest
+    }
+
+    // Execute query with pagination
+    const products = await Product.find(filter).sort(sortOptions).exec();
+
+    res.json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error: " + error.message,
+    });
+  }
+});
+
 // router.get(
 //   "/",
 //   protect,
