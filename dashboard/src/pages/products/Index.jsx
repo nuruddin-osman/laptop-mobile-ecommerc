@@ -141,30 +141,6 @@ const Products = () => {
       result = result.filter((product) => product.status === statusFilter);
     }
 
-    // Apply sorting
-    switch (sortBy) {
-      case "name":
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "price-high":
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case "price-low":
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case "sales":
-        result.sort((a, b) => b.sales - a.sales);
-        break;
-      case "newest":
-        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        break;
-      case "oldest":
-        result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        break;
-      default:
-        break;
-    }
-
     setFilteredProducts(result);
     setCurrentPage(1); // Reset to first page when filters change
   }, [products, searchTerm, categoryFilter, statusFilter, sortBy]);
@@ -189,48 +165,68 @@ const Products = () => {
     });
   };
 
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/dashboard/product`
+      );
+      if (response.data) {
+        console.log(response.data.data);
+        setProducts(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
   // Handle add product
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const normalizedData = normalizeProductData(formData);
-      const response = await axios.post(
-        `http://localhost:4000/api/dashboard/product`,
-        normalizedData
-      );
-
-      console.log(response);
-      if (response.data.success) {
-        setIsModalOpen(false);
-        setFormData({
-          name: "",
-          brand: "",
-          category: "laptops",
-          price: "",
-          description: "",
-          tags: [],
-          rating: {
-            value: "",
-            count: "",
-          },
-          stock: "",
-          discount: {
-            percentage: 0,
-            expiresAt: "",
-          },
-          status: "active",
-          weight: 0,
-          dimensions: {
-            length: 0,
-            width: 0,
-            height: 0,
-          },
-          warranty: "",
-        });
-
-        // Products refresh করুন (যদি প্রয়োজন হয়)
-        // fetchProducts();
+      if (editingProduct) {
+        const normalizedData = normalizeProductData(formData);
+        const response = await axios.put(
+          `http://localhost:4000/api/dashboard/product/${editingProduct._id}`,
+          normalizedData
+        );
+        console.log(response.data.data);
+      } else {
+        const normalizedData = normalizeProductData(formData);
+        const response = await axios.post(
+          `http://localhost:4000/api/dashboard/product`,
+          normalizedData
+        );
       }
+      setIsModalOpen(false);
+      setFormData({
+        name: "",
+        brand: "",
+        category: "laptops",
+        price: "",
+        description: "",
+        tags: [],
+        rating: {
+          value: "",
+          count: "",
+        },
+        stock: "",
+        discount: {
+          percentage: 0,
+          expiresAt: "",
+        },
+        status: "active",
+        weight: 0,
+        dimensions: {
+          length: 0,
+          width: 0,
+          height: 0,
+        },
+        warranty: "",
+      });
     } catch (error) {
       console.log(error);
 
@@ -244,6 +240,8 @@ const Products = () => {
   };
 
   const handleEdit = (product) => {
+    console.log(product);
+
     setFormData({
       name: product.name || "",
       brand: product.brand || "",
