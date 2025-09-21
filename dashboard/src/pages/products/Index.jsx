@@ -31,6 +31,7 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [statsProduct, setStatsProduct] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -118,17 +119,19 @@ const Products = () => {
   };
 
   // Stats data - FIXED: NaN error for products without sales
-  const stats = {
-    totalProducts: products.length,
-    totalSales: products.reduce(
-      (sum, product) => sum + (product.sales || 0),
-      0
-    ),
-    outOfStock: products.filter((product) => product.stock === 0).length,
-    totalRevenue: products.reduce(
-      (sum, product) => sum + product.price * (product.sales || 0),
-      0
-    ),
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/dashboard/product/stats`
+      );
+      if (response.data) {
+        setStatsProduct(response.data.data);
+      } else {
+        console.log("Stats fetch failed");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   // Handle form input changes
@@ -226,6 +229,7 @@ const Products = () => {
 
   // First time load
   useEffect(() => {
+    fetchStats();
     fetchProducts({
       searchTerm,
       categoryFilter,
@@ -240,6 +244,7 @@ const Products = () => {
   // Every term change
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
+      fetchStats();
       fetchProducts({
         searchTerm,
         categoryFilter,
@@ -431,7 +436,7 @@ const Products = () => {
                   Total Products
                 </h3>
                 <p className="text-2xl font-bold text-gray-800">
-                  {stats.totalProducts}
+                  {statsProduct.totalProducts}
                 </p>
               </div>
             </div>
@@ -447,7 +452,7 @@ const Products = () => {
                   Total Sales
                 </h3>
                 <p className="text-2xl font-bold text-gray-800">
-                  {stats.totalSales}
+                  {statsProduct.totalSales}
                 </p>
               </div>
             </div>
@@ -463,7 +468,7 @@ const Products = () => {
                   Out of Stock
                 </h3>
                 <p className="text-2xl font-bold text-gray-800">
-                  {stats.outOfStock}
+                  {statsProduct.outOfStock}
                 </p>
               </div>
             </div>
@@ -479,7 +484,7 @@ const Products = () => {
                   Total Revenue
                 </h3>
                 <p className="text-2xl font-bold text-gray-800">
-                  ${stats.totalRevenue.toLocaleString()}
+                  $ {statsProduct.totalRevenue}
                 </p>
               </div>
             </div>
@@ -679,7 +684,7 @@ const Products = () => {
                       {product.brand}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.sales || 0}{" "}
+                      {product.sales}
                       {/* FIXED: Show 0 if sales is undefined */}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -909,14 +914,6 @@ const Products = () => {
                           Separate tags with commas
                         </p>
                       </div>
-                    </div>
-
-                    {/* Right Column - Pricing & Details */}
-                    <div className="space-y-5">
-                      <h4 className="font-semibold text-gray-700 border-b pb-2">
-                        Pricing & Details
-                      </h4>
-
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -939,7 +936,31 @@ const Products = () => {
                             />
                           </div>
                         </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Sales
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              name="sales"
+                              value={formData.sales}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              min="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
+                    {/* Right Column - Pricing & Details */}
+                    <div className="space-y-5">
+                      <h4 className="font-semibold text-gray-700 border-b pb-2">
+                        Pricing & Details
+                      </h4>
+
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Discount (%)
@@ -960,6 +981,13 @@ const Products = () => {
                                 max="100"
                               />
                             </div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            ExpiresAt
+                          </label>
+                          <div className="flex flex-col gap-2">
                             <div className="relative">
                               <input
                                 type="date"
