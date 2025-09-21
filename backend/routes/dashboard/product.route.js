@@ -82,47 +82,61 @@ router.get("/", async (req, res) => {
 //   }
 // );
 
-// // Get product statistics
-// router.get("/stats", protect, async (req, res) => {
-//   try {
-//     const stats = await Product.getStatistics();
+// Get product statistics
+// Get product statistics
+router.get("/stats", async (req, res) => {
+  try {
+    // Get total products count
+    const totalProducts = await Product.countDocuments();
 
-//     // Get category-wise counts
-//     const categoryStats = await Product.aggregate([
-//       {
-//         $group: {
-//           _id: "$category",
-//           count: { $sum: 1 },
-//           totalStock: { $sum: "$stock" },
-//         },
-//       },
-//     ]);
+    // Get total sales (sum of all products' sales)
+    const totalSalesResult = await Product.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalSale: { $sum: "$sales" },
+        },
+      },
+    ]);
 
-//     // Get status-wise counts
-//     const statusStats = await Product.aggregate([
-//       {
-//         $group: {
-//           _id: "$status",
-//           count: { $sum: 1 },
-//         },
-//       },
-//     ]);
+    const totalSales = totalSalesResult[0]?.totalSale || 0;
+    console.log(totalSales);
 
-//     res.status(200).json({
-//       success: true,
-//       data: {
-//         overview: stats,
-//         byCategory: categoryStats,
-//         byStatus: statusStats,
-//       },
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Server Error",
-//     });
-//   }
-// });
+    // Get out of stock products count
+    const outOfStock = await Product.countDocuments({ stock: 0 });
+
+    // Get total revenue (sum of price * sales for all products)
+    const totalRevenueResult = await Product.aggregate([
+      {
+        $project: {
+          revenue: { $multiply: ["$price", "$sales"] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$revenue" },
+        },
+      },
+    ]);
+    const totalRevenue = totalRevenueResult[0]?.totalRevenue || 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalProducts,
+        totalSales,
+        outOfStock,
+        totalRevenue,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching statistics: " + error.message,
+    });
+  }
+});
 
 // // Get single product
 // router.get("/:id", protect, async (req, res) => {

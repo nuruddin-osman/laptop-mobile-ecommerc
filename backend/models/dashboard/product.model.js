@@ -107,6 +107,10 @@ const productSchema = new mongoose.Schema(
       type: Number,
       min: 0,
     },
+    sales: {
+      type: Number,
+      min: 0,
+    },
     dimensions: {
       length: Number,
       width: Number,
