@@ -25,14 +25,17 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Product category is required"],
       enum: {
-        values: ["laptops", "mobiles", "accessories", "tablets", "components"],
+        values: ["laptops", "mobiles", "accessories", "tablets", "wearables"],
         message: "Please select a valid category",
       },
     },
     brand: {
       type: String,
       required: [true, "Product brand is required"],
-      trim: true,
+      enum: {
+        values: ["Apple", "Samsung", "Dell", "HP", "Oppo", "Redmi", "Motorola"],
+        message: "Please select a valid Brand",
+      },
     },
     // images: [
     //   {
@@ -72,7 +75,13 @@ const productSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ["active", "inactive", "out-of-stock", "discontinued"],
+        values: [
+          "active",
+          "inactive",
+          "out-of-stock",
+          "low-stock",
+          "discontinued",
+        ],
         message: "Please select a valid status",
       },
       default: "active",
@@ -115,6 +124,10 @@ const productSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    sku: {
+      type: String,
+      unique: true,
+    },
   },
   {
     timestamps: true,
@@ -130,7 +143,7 @@ productSchema.index({ createdAt: -1 });
 
 //  Pre-save middleware to generate SKU automatically
 productSchema.pre("save", async function (next) {
-  if (!this.sku) {
+  if (!this.sku || this.sku.trim() === "") {
     const count = await mongoose.model("Product").countDocuments();
     this.sku = `SKU-${String(count + 1).padStart(6, "0")}`;
   }
