@@ -26,12 +26,13 @@ const Products = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [brandFilter, setBrandFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [priceRange, setPriceRange] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  // Form state এ description field যোগ করুন
+  // Form state
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
@@ -67,6 +68,9 @@ const Products = () => {
       discount: {
         ...formData.discount,
         percentage: Number(formData.discount.percentage),
+        expiresAt: formData.discount.expiresAt
+          ? new Date(formData.discount.expiresAt).toISOString()
+          : null,
       },
       dimensions: {
         length: Number(formData.dimensions.length),
@@ -77,9 +81,7 @@ const Products = () => {
         value: Number(formData.rating.value),
         count: Number(formData.rating.count),
       },
-
       description: formData.description || "",
-
       warranty: formData.warranty || "1 year",
     };
   };
@@ -106,7 +108,6 @@ const Products = () => {
 
   const handleRatingChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       rating: {
@@ -116,13 +117,16 @@ const Products = () => {
     }));
   };
 
-  // Stats data
+  // Stats data - FIXED: NaN error for products without sales
   const stats = {
     totalProducts: products.length,
-    totalSales: products.reduce((sum, product) => sum + product.sales, 0),
+    totalSales: products.reduce(
+      (sum, product) => sum + (product.sales || 0),
+      0
+    ),
     outOfStock: products.filter((product) => product.stock === 0).length,
     totalRevenue: products.reduce(
-      (sum, product) => sum + product.price * product.sales,
+      (sum, product) => sum + product.price * (product.sales || 0),
       0
     ),
   };
@@ -138,10 +142,12 @@ const Products = () => {
 
   const fetchProducts = async ({
     searchTerm = "",
-    categoryFilter,
-    statusFilter,
+    categoryFilter = "all",
+    statusFilter = "all",
     brandFilter = "all",
     priceRange = "all",
+    sortBy = "newest",
+    sortOrder = "desc",
   }) => {
     try {
       let minPrice, maxPrice;
@@ -166,21 +172,51 @@ const Products = () => {
           minPrice = null;
           maxPrice = null;
       }
+
+      // Sort options conversion
+      let backendSortBy;
+      let backendSortOrder = sortOrder;
+
+      switch (sortBy) {
+        case "newest":
+          backendSortBy = "createdAt";
+          break;
+        case "oldest":
+          backendSortBy = "createdAt";
+          backendSortOrder = "asc";
+          break;
+        case "name":
+          backendSortBy = "name";
+          backendSortOrder = "asc";
+          break;
+        case "price-high":
+          backendSortBy = "price";
+          backendSortOrder = "desc";
+          break;
+        case "price-low":
+          backendSortBy = "price";
+          backendSortOrder = "asc";
+          break;
+        default:
+          backendSortBy = "createdAt";
+      }
+
       const response = await axios.get(
         `http://localhost:4000/api/dashboard/product`,
         {
           params: {
             search: searchTerm,
-            category: categoryFilter,
-            status: statusFilter,
-            brand: brandFilter,
+            category: categoryFilter !== "all" ? categoryFilter : undefined,
+            status: statusFilter !== "all" ? statusFilter : undefined,
+            brand: brandFilter !== "all" ? brandFilter : undefined,
             minPrice: minPrice,
             maxPrice: maxPrice,
+            sortBy: backendSortBy,
+            sortOrder: backendSortOrder,
           },
         }
       );
       if (response.data) {
-        console.log(response.data.data);
         setProducts(response.data.data);
       }
     } catch (error) {
@@ -188,7 +224,7 @@ const Products = () => {
     }
   };
 
-  //Frist time load
+  // First time load
   useEffect(() => {
     fetchProducts({
       searchTerm,
@@ -196,10 +232,12 @@ const Products = () => {
       statusFilter,
       brandFilter,
       priceRange,
+      sortBy,
+      sortOrder,
     });
   }, []);
 
-  //Every term change
+  // Every term change
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchProducts({
@@ -208,40 +246,54 @@ const Products = () => {
         statusFilter,
         brandFilter,
         priceRange,
+        sortBy,
+        sortOrder,
       });
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, categoryFilter, statusFilter, brandFilter, priceRange]);
+  }, [
+    searchTerm,
+    categoryFilter,
+    statusFilter,
+    brandFilter,
+    priceRange,
+    sortBy,
+    sortOrder,
+  ]);
 
-  // Handle add product
+  // Handle add product - IMPROVED: Better error handling
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      const normalizedData = normalizeProductData(formData);
+
       if (editingProduct) {
-        const normalizedData = normalizeProductData(formData);
         const response = await axios.put(
           `http://localhost:4000/api/dashboard/product/${editingProduct._id}`,
           normalizedData
         );
-        if (response.data) {
-          alert(`Error: ${response.data.message}`);
+        if (response.data.success) {
+          alert("Product updated successfully!");
         } else {
-          alert("An error occurred while saving the product");
+          alert(`Error: ${response.data.message}`);
         }
       } else {
-        const normalizedData = normalizeProductData(formData);
         const response = await axios.post(
           `http://localhost:4000/api/dashboard/product`,
           normalizedData
         );
-        if (response.data) {
-          alert(`Error: ${response.data.message}`);
+        if (response.data.success) {
+          alert("Product created successfully!");
         } else {
-          alert("An error occurred while saving the product");
+          alert(`Error: ${response.data.message}`);
         }
       }
+
       setIsModalOpen(false);
+      setEditingProduct(null);
+
+      // Reset form
       setFormData({
         name: "",
         brand: "",
@@ -267,8 +319,28 @@ const Products = () => {
         },
         warranty: "",
       });
+
+      // Refresh products list
+      fetchProducts({
+        searchTerm,
+        categoryFilter,
+        statusFilter,
+        brandFilter,
+        priceRange,
+        sortBy,
+        sortOrder,
+      });
     } catch (error) {
-      console.log(error);
+      console.error("Product operation error:", error);
+
+      // IMPROVED: Better error messages
+      if (error.response?.data?.message) {
+        alert(`Error: ${error.response.data.message}`);
+      } else if (error.message) {
+        alert(`Error: ${error.message}`);
+      } else {
+        alert("An unknown error occurred while saving the product");
+      }
     }
   };
 
@@ -301,6 +373,7 @@ const Products = () => {
     setEditingProduct(product);
     setIsModalOpen(true);
   };
+
   // Handle delete product
   const handleDeleteProduct = async (id) => {
     try {
@@ -309,7 +382,16 @@ const Products = () => {
       );
       if (response.data) {
         alert("Delete success");
-        fetchProducts("");
+        // Refresh with current filters
+        fetchProducts({
+          searchTerm,
+          categoryFilter,
+          statusFilter,
+          brandFilter,
+          priceRange,
+          sortBy,
+          sortOrder,
+        });
       } else {
         alert("Delete failed");
       }
@@ -441,7 +523,6 @@ const Products = () => {
                 <option value="name">Name A-Z</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="price-low">Price: Low to High</option>
-                <option value="sales">Most Sales</option>
               </select>
 
               <button
@@ -471,6 +552,7 @@ const Products = () => {
                     <option value="laptops">Laptops</option>
                     <option value="mobiles">Mobiles</option>
                     <option value="accessories">Accessories</option>
+                    {/* REMOVED: wearables option because it's not in backend enum */}
                   </select>
                 </div>
 
@@ -485,8 +567,9 @@ const Products = () => {
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
                     <option value="out-of-stock">Out of Stock</option>
-                    <option value="low-stock">Low Stock</option>
+                    <option value="discontinued">Discontinued</option>
                   </select>
                 </div>
 
@@ -503,7 +586,7 @@ const Products = () => {
                     <option value="Apple">Apple</option>
                     <option value="Samsung">Samsung</option>
                     <option value="Dell">Dell</option>
-                    <option value="Hp">HP</option>
+                    <option value="HP">HP</option>
                     <option value="Oppo">Oppo</option>
                     <option value="Redmi">Redmi</option>
                     <option value="Motorola">Motorola</option>
@@ -596,7 +679,8 @@ const Products = () => {
                       {product.brand}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.sales}
+                      {product.sales || 0}{" "}
+                      {/* FIXED: Show 0 if sales is undefined */}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -605,6 +689,8 @@ const Products = () => {
                             ? "bg-green-100 text-green-800"
                             : product.status === "out-of-stock"
                             ? "bg-red-100 text-red-800"
+                            : product.status === "discontinued"
+                            ? "bg-gray-100 text-gray-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
@@ -612,7 +698,9 @@ const Products = () => {
                           ? "Active"
                           : product.status === "out-of-stock"
                           ? "Out of Stock"
-                          : "Low Stock"}
+                          : product.status === "discontinued"
+                          ? "Discontinued"
+                          : product.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -653,6 +741,33 @@ const Products = () => {
                 <button
                   onClick={() => {
                     setIsModalOpen(false);
+                    setEditingProduct(null);
+                    // Reset form when closing modal
+                    setFormData({
+                      name: "",
+                      brand: "",
+                      category: "laptops",
+                      price: "",
+                      description: "",
+                      tags: [],
+                      rating: {
+                        value: "",
+                        count: "",
+                      },
+                      stock: "",
+                      discount: {
+                        percentage: 0,
+                        expiresAt: "",
+                      },
+                      status: "active",
+                      weight: 0,
+                      dimensions: {
+                        length: 0,
+                        width: 0,
+                        height: 0,
+                      },
+                      warranty: "",
+                    });
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
@@ -693,6 +808,7 @@ const Products = () => {
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           placeholder="Enter product name"
+                          required
                         />
                       </div>
                       <div>
@@ -704,12 +820,14 @@ const Products = () => {
                           value={formData.brand}
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
+                          required
                         >
                           <option value="">Select Brand</option>
                           <option value="Apple">Apple</option>
                           <option value="Samsung">Samsung</option>
                           <option value="Dell">Dell</option>
-                          <option value="Hp">HP</option>
+                          <option value="HP">HP</option>{" "}
+                          {/* FIXED: Changed from "Hp" to "HP" */}
                           <option value="Oppo">Oppo</option>
                           <option value="Redmi">Redmi</option>
                           <option value="Motorola">Motorola</option>
@@ -725,13 +843,14 @@ const Products = () => {
                             value={formData.category}
                             onChange={handleInputChange}
                             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
+                            required
                           >
                             <option value="">Select Category</option>
                             <option value="laptops">Laptops</option>
                             <option value="mobiles">Mobiles</option>
                             <option value="accessories">Accessories</option>
                             <option value="tablets">Tablets</option>
-                            <option value="wearables">Wearables</option>
+                            {/* REMOVED: wearables option because it's not in backend enum */}
                           </select>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
                             <FaSort />
@@ -751,6 +870,9 @@ const Products = () => {
                               value={formData.rating.value}
                               onChange={handleRatingChange}
                               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              min="0"
+                              max="5"
+                              step="0.1"
                             />
                           </div>
                         </div>
@@ -766,7 +888,8 @@ const Products = () => {
                               placeholder="Rating Count"
                               value={formData.rating.count}
                               onChange={handleRatingChange}
-                              className="w-full  px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              min="0"
                             />
                           </div>
                         </div>
@@ -812,6 +935,7 @@ const Products = () => {
                               placeholder="0.00"
                               min="0"
                               step="0.01"
+                              required
                             />
                           </div>
                         </div>
@@ -820,26 +944,31 @@ const Products = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Discount (%)
                           </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="text-gray-500">%</span>
+                          <div className="flex flex-col gap-2">
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span className="text-gray-500">%</span>
+                              </div>
+                              <input
+                                type="number"
+                                name="percentage"
+                                value={formData.discount.percentage}
+                                onChange={handleDiscountChange}
+                                className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="0"
+                                min="0"
+                                max="100"
+                              />
                             </div>
-                            <input
-                              type="number"
-                              name="percentage"
-                              value={formData.discount.percentage}
-                              onChange={handleDiscountChange}
-                              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                              placeholder="0"
-                            />
-                            <input
-                              type="date"
-                              name="expiresAt"
-                              value={formData.discount.expiresAt}
-                              onChange={handleDiscountChange}
-                              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                              placeholder="0"
-                            />
+                            <div className="relative">
+                              <input
+                                type="date"
+                                name="expiresAt"
+                                value={formData.discount.expiresAt}
+                                onChange={handleDiscountChange}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -857,6 +986,7 @@ const Products = () => {
                             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                             placeholder="0"
                             min="0"
+                            required
                           />
                         </div>
 
@@ -921,8 +1051,8 @@ const Products = () => {
                               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all"
                             >
                               <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
                               <option value="out-of-stock">Out of Stock</option>
-                              <option value="low-stock">Low Stock</option>
                               <option value="discontinued">Discontinued</option>
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
@@ -1011,7 +1141,7 @@ const Products = () => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Description
+                          Description <span className="text-red-500">*</span>
                         </label>
                         <textarea
                           name="description"
@@ -1020,6 +1150,7 @@ const Products = () => {
                           rows="3"
                           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           placeholder="Describe the product features and specifications..."
+                          required
                         ></textarea>
                       </div>
                       <div>
@@ -1058,6 +1189,32 @@ const Products = () => {
                       onClick={() => {
                         setIsModalOpen(false);
                         setEditingProduct(null);
+                        // Reset form when closing modal
+                        setFormData({
+                          name: "",
+                          brand: "",
+                          category: "laptops",
+                          price: "",
+                          description: "",
+                          tags: [],
+                          rating: {
+                            value: "",
+                            count: "",
+                          },
+                          stock: "",
+                          discount: {
+                            percentage: 0,
+                            expiresAt: "",
+                          },
+                          status: "active",
+                          weight: 0,
+                          dimensions: {
+                            length: 0,
+                            width: 0,
+                            height: 0,
+                          },
+                          warranty: "",
+                        });
                       }}
                     >
                       বাতিল
