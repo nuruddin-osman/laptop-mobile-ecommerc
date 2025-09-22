@@ -32,6 +32,9 @@ const Products = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [statsProduct, setStatsProduct] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+
+  const BASE_URL = "http://localhost:4000";
 
   // Form state
   const [formData, setFormData] = useState({
@@ -120,6 +123,7 @@ const Products = () => {
 
   // Stats data - FIXED: NaN error for products without sales
   const fetchStats = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(
         `http://localhost:4000/api/dashboard/product/stats`
@@ -141,6 +145,35 @@ const Products = () => {
       ...formData,
       [name]: value,
     });
+  };
+
+  // image upload function
+  const handleImageUpload = async (e) => {
+    try {
+      const formData = new FormData();
+      const file = e.target.files[0];
+      formData.append("image", file);
+
+      const response = await axios.post(
+        `http://localhost:4000/api/dashboard/product/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setImageUrl(response.data.imageUrl);
+        alert("Image uploaded successfully!");
+      } else {
+        alert("Image upload failed");
+      }
+    } catch (error) {
+      console.error("Image upload error:", error);
+      alert("Image upload error");
+    }
   };
 
   const fetchProducts = async ({
@@ -225,6 +258,7 @@ const Products = () => {
     } catch (error) {
       console.log(error);
     }
+    setLoading(false);
   };
 
   // First time load
@@ -271,7 +305,12 @@ const Products = () => {
     e.preventDefault();
 
     try {
-      const normalizedData = normalizeProductData(formData);
+      const productData = {
+        ...formData,
+        image: imageUrl ? [{ url: imageUrl, alt: formData.name }] : [],
+      };
+      const normalizedData = normalizeProductData(productData);
+      console.log(normalizedData);
 
       if (editingProduct) {
         const response = await axios.put(
@@ -324,6 +363,7 @@ const Products = () => {
         },
         warranty: "",
       });
+      setImageUrl("");
 
       // Refresh products list
       fetchProducts({
@@ -376,6 +416,12 @@ const Products = () => {
       warranty: product.warranty || "",
     });
     setEditingProduct(product);
+
+    if (product.image && product.image.length > 0) {
+      setImageUrl(product.image[0].url);
+    } else {
+      setImageUrl("");
+    }
     setIsModalOpen(true);
   };
 
@@ -656,8 +702,12 @@ const Products = () => {
                   <tr key={product._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <FaBox className="text-gray-400" />
+                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                          <img
+                            className="w-full h-full object-cover"
+                            src={`${BASE_URL}${product.image[0]?.url}`}
+                            alt={product.image[0]?.alt}
+                          />
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
@@ -1181,23 +1231,42 @@ const Products = () => {
                           required
                         ></textarea>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Product Image
-                        </label>
-                        <div className="flex items-center justify-center w-full">
-                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <FaPlus className="w-8 h-8 mb-3 text-gray-400" />
-                              <p className="mb-2 text-sm text-gray-500">
-                                Click to upload image
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                SVG, PNG, JPG or GIF (MAX. 5MB)
-                              </p>
-                            </div>
-                            <input type="file" className="hidden" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Product Image
                           </label>
+                          <div className="flex items-center justify-center w-full">
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <FaPlus className="w-8 h-8 mb-3 text-gray-400" />
+                                <p className="mb-2 text-sm text-gray-500">
+                                  Click to upload image
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  SVG, PNG, JPG or GIF (MAX. 5MB)
+                                </p>
+                              </div>
+                              <input
+                                onChange={handleImageUpload}
+                                type="file"
+                                name="image"
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        <div>
+                          {imageUrl && (
+                            <div>
+                              <img
+                                src={`${BASE_URL}${imageUrl}`}
+                                alt="Preview"
+                                style={{ width: "100px", height: "100px" }}
+                              />
+                              <span>Image Uploaded Successfully!</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
