@@ -9,6 +9,7 @@ import Checkout from "./pages/checkout/Index";
 import AccountPage from "./pages/account/Index";
 import AboutPage from "./pages/about/Index";
 import ContactPage from "./pages/contact/Index";
+import Drupt from "./components/Drupt";
 
 const App = () => {
   let router = createBrowserRouter([
@@ -51,6 +52,10 @@ const App = () => {
         {
           path: "/contact",
           element: <ContactPage />,
+        },
+        {
+          path: "/d",
+          element: <Drupt />,
         },
       ],
     },

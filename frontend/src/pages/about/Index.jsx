@@ -70,7 +70,7 @@ const AboutPage = () => {
       <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            টেকবাজার সম্পর্কে
+            About NuruddinTech
           </h1>
           <p className="text-xl max-w-3xl mx-auto">
             বাংলাদেশের অন্যতম সেরা ইলেকট্রনিক্স পণ্যের অনলাইন Marketplace

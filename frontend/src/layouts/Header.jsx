@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Logo from "./../assets/images/logo/nLogo.png";
 import {
   FaShoppingCart,
   FaUser,
@@ -57,9 +58,15 @@ const Header = () => {
             {/* Logo */}
             <Link
               to="/"
-              className="text-2xl font-bold text-blue-600 flex items-center"
+              className="text-2xl font-bold text-blue-600 flex items-center gap-2.5"
             >
-              <FaBox className="mr-2" />
+              <div className="w-10 h-10 overflow-hidden">
+                <img
+                  className="w-full h-full object-cover"
+                  src={Logo}
+                  alt="Logo"
+                />
+              </div>
               NuruddinTech
             </Link>
 
@@ -93,7 +100,7 @@ const Header = () => {
               <div className="relative">
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center text-gray-600 hover:text-blue-600"
+                  className="flex items-center text-gray-600 cursor-pointer hover:text-blue-600"
                 >
                   <FaUser size={18} />
                   <span className="ml-1">My Account</span>

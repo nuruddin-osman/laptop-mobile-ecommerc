@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">TechBazar</h3>
+            <h3 className="text-xl font-bold mb-4">NuruddinTech</h3>
             <p className="text-gray-400">
               Your trusted destination for the latest laptops and mobile phones
               at competitive prices.
