@@ -1,6 +1,8 @@
 const express = require("express");
 const Product = require("../../models/dashboard/product.model");
 const router = express.Router();
+const multer = require("multer");
+const path = require("path");
 
 // Get all products with filtering, sorting,
 
@@ -100,7 +102,6 @@ router.get("/stats", async (req, res) => {
     ]);
 
     const totalSales = totalSalesResult[0]?.totalSale || 0;
-    console.log(totalSales);
 
     // Get out of stock products count
     const outOfStock = await Product.countDocuments({ stock: 0 });
@@ -163,6 +164,42 @@ router.get("/stats", async (req, res) => {
 //     });
 //   }
 // });
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../../uploads"));
+  },
+  filename: (req, file, cb) => {
+    const name = Date.now() + "-" + file.originalname;
+    cb(null, name);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Only image upload  route
+router.post("/upload", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image file uploaded",
+      });
+    }
+
+    // Image path send from Frontend
+    res.status(200).json({
+      success: true,
+      imageUrl: `/uploads/${req.file.filename}`,
+      message: "Image uploaded successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
 
 // Create new product
 router.post("/", async (req, res) => {

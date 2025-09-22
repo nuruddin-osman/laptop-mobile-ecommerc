@@ -37,18 +37,6 @@ const productSchema = new mongoose.Schema(
         message: "Please select a valid Brand",
       },
     },
-    // images: [
-    //   {
-    //     url: {
-    //       type: String,
-    //       required: true,
-    //     },
-    //     alt: {
-    //       type: String,
-    //       default: "",
-    //     },
-    //   },
-    // ],
     stock: {
       type: Number,
       required: true,
@@ -97,11 +85,6 @@ const productSchema = new mongoose.Schema(
     featured: {
       type: Boolean,
       default: false,
-    },
-    sku: {
-      type: String,
-      unique: true,
-      sparse: true,
     },
     weight: {
       type: Number,
