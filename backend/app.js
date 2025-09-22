@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 require("./config/database");
 const cors = require("cors");
+const path = require("path");
 
 // const headerRoute = require("./routes/headers/headers.routes");
 const dashboardProductRoute = require("./routes/dashboard/product.route");
@@ -17,6 +18,8 @@ app.get("/", (req, res) => {
   res.send("this is right");
 });
 // app.use("/api/header", headerRoute);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use("/api/dashboard/product", dashboardProductRoute);
 
 // Not Found Handler

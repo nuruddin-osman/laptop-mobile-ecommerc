@@ -37,6 +37,18 @@ const productSchema = new mongoose.Schema(
         message: "Please select a valid Brand",
       },
     },
+    image: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        alt: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
     stock: {
       type: Number,
       required: true,
