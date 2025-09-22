@@ -15,8 +15,144 @@ import "swiper/css/navigation";
 import "swiper/css/effect-fade";
 
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [priceRange, setPriceRange] = useState("all");
+
+  const productSlice = products.slice(0, 4);
+  console.log(productSlice);
+
+  const fetchProducts = async ({
+    searchTerm = "",
+    categoryFilter = "all",
+    statusFilter = "all",
+    brandFilter = "all",
+    priceRange = "all",
+    sortBy = "newest",
+    sortOrder = "desc",
+  }) => {
+    try {
+      let minPrice, maxPrice;
+      switch (priceRange) {
+        case "0-500":
+          minPrice = 0;
+          maxPrice = 500;
+          break;
+        case "500-1000":
+          minPrice = 500;
+          maxPrice = 1000;
+          break;
+        case "1000-1500":
+          minPrice = 1000;
+          maxPrice = 1500;
+          break;
+        case "1500+":
+          minPrice = 1500;
+          maxPrice = null;
+          break;
+        default:
+          minPrice = null;
+          maxPrice = null;
+      }
+
+      // Sort options conversion
+      let backendSortBy;
+      let backendSortOrder = sortOrder;
+
+      switch (sortBy) {
+        case "newest":
+          backendSortBy = "createdAt";
+          break;
+        case "oldest":
+          backendSortBy = "createdAt";
+          backendSortOrder = "asc";
+          break;
+        case "name":
+          backendSortBy = "name";
+          backendSortOrder = "asc";
+          break;
+        case "price-high":
+          backendSortBy = "price";
+          backendSortOrder = "desc";
+          break;
+        case "price-low":
+          backendSortBy = "price";
+          backendSortOrder = "asc";
+          break;
+        default:
+          backendSortBy = "createdAt";
+      }
+
+      const response = await axios.get(
+        `http://localhost:4000/api/dashboard/product`,
+        {
+          params: {
+            search: searchTerm,
+            category: categoryFilter !== "all" ? categoryFilter : undefined,
+            status: statusFilter !== "all" ? statusFilter : undefined,
+            brand: brandFilter !== "all" ? brandFilter : undefined,
+            minPrice: minPrice,
+            maxPrice: maxPrice,
+            sortBy: backendSortBy,
+            sortOrder: backendSortOrder,
+          },
+        }
+      );
+      if (response.data) {
+        setProducts(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  };
+
+  // First time load
+  useEffect(() => {
+    fetchProducts({
+      searchTerm,
+      categoryFilter,
+      statusFilter,
+      brandFilter,
+      priceRange,
+      sortBy,
+      sortOrder,
+    });
+  }, []);
+
+  // Every term change
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts({
+        searchTerm,
+        categoryFilter,
+        statusFilter,
+        brandFilter,
+        priceRange,
+        sortBy,
+        sortOrder,
+      });
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [
+    searchTerm,
+    categoryFilter,
+    statusFilter,
+    brandFilter,
+    priceRange,
+    sortBy,
+    sortOrder,
+  ]);
   // Sample products data - in real app, this would come from API
   const featuredProducts = [
     {
@@ -108,6 +244,14 @@ const Home = () => {
       overlay: "bg-gray-900 bg-opacity-60",
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -223,8 +367,8 @@ const Home = () => {
           Featured Products
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {productSlice.map((product) => (
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
         <div className="text-center mt-8">
