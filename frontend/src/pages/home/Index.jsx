@@ -30,7 +30,6 @@ const Home = () => {
   const [priceRange, setPriceRange] = useState("all");
 
   const productSlice = products.slice(0, 4);
-  console.log(productSlice);
 
   const fetchProducts = async ({
     searchTerm = "",
