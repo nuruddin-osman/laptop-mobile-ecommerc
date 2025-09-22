@@ -58,7 +58,7 @@ router.get("/", async (req, res) => {
     }
 
     // Execute query with pagination
-    const products = await Product.find(filter).sort(sortOptions).exec();
+    const products = await Product.find(filter).sort({ createdAt: -1 }).exec();
 
     res.json({
       success: true,
