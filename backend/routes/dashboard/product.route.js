@@ -49,16 +49,16 @@ router.get("/", async (req, res) => {
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // Sort options
+    // Sort options (Dynamic)
     let sortOptions = {};
     if (sortBy) {
       sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
     } else {
-      sortOptions.createdAt = -1; // Default sort by newest
+      sortOptions.createdAt = -1; // ✅ Default: latest post first
     }
 
-    // Execute query with pagination
-    const products = await Product.find(filter).sort({ createdAt: -1 }).exec();
+    // Execute query with sortOptions
+    const products = await Product.find(filter).sort(sortOptions).exec();
 
     res.json({
       success: true,
@@ -139,31 +139,29 @@ router.get("/stats", async (req, res) => {
   }
 });
 
-// // Get single product
-// router.get("/:id", protect, async (req, res) => {
-//   try {
-//     const product = await Product.findById(req.params.id)
-//       .populate("createdBy", "name email")
-//       .populate("updatedBy", "name email");
+// Get single product
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
 
-//     if (!product) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Product not found",
-//       });
-//     }
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       data: product,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Server Error",
-//     });
-//   }
-// });
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {

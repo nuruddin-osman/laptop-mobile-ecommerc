@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FaFilter } from "react-icons/fa";
 import ProductCard from "../../components/ProductCard";
@@ -13,6 +13,7 @@ const Products = () => {
       categoryFilter: category || "all",
       sortBy: "newest",
     });
+
   const categories = [...new Set(products.map((item) => item.category))];
   const brands = [...new Set(products.map((item) => item.brand))];
 
@@ -29,6 +30,7 @@ const Products = () => {
   const handleCategoryChange = (categoryValue) => {
     updateFilters({ categoryFilter: categoryValue });
   };
+
   const handleRatingSort = (ratingValue) => {
     updateFilters({ sortBy: ratingValue });
   };

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Logo from "./../assets/images/logo/nLogo.png";
 import {
   FaShoppingCart,
@@ -199,7 +199,7 @@ const Header = () => {
               >
                 All products
               </Link>
-              <Link
+              {/* <Link
                 to="/products/laptops"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
@@ -210,7 +210,7 @@ const Header = () => {
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
                 Mobile
-              </Link>
+              </Link> */}
               <Link
                 to="/about"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
@@ -237,28 +237,28 @@ const Header = () => {
                   className="text-gray-700 hover:text-blue-600 font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  হোম
+                  Home
                 </Link>
                 <Link
                   to="/products"
                   className="text-gray-700 hover:text-blue-600 font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  সকল প্রোডাক্ট
+                  All products
                 </Link>
                 <Link
-                  to="/products/laptops"
+                  to="/about"
                   className="text-gray-700 hover:text-blue-600 font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  ল্যাপটপ
+                  About us
                 </Link>
                 <Link
-                  to="/products/mobiles"
+                  to="/contact"
                   className="text-gray-700 hover:text-blue-600 font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  মোবাইল
+                  Contact
                 </Link>
 
                 <hr />
