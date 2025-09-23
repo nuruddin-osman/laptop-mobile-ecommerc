@@ -10,6 +10,8 @@ import AccountPage from "./pages/account/Index";
 import AboutPage from "./pages/about/Index";
 import ContactPage from "./pages/contact/Index";
 import Drupt from "./components/Drupt";
+import { store } from "./featurs/store";
+import { Provider } from "react-redux";
 
 const App = () => {
   let router = createBrowserRouter([
@@ -63,7 +65,9 @@ const App = () => {
 
   return (
     <>
-      <RouterProvider router={router} />
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
     </>
   );
 };
