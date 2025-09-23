@@ -17,7 +17,7 @@ const Checkout = () => {
     nameOnCard: "",
   });
 
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
   const dispatch = useDispatch();
 
   const handleInputChange = (e) => {

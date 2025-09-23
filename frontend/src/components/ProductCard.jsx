@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../featurs/slice/cartSlice";
 
 const ProductCard = ({ product }) => {
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
 
   const dispatch = useDispatch();
 

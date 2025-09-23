@@ -7,8 +7,9 @@ const ProductDetails = () => {
   const { id } = useParams();
   const [product, setProduct] = useState({});
   const [allProducts, setAllProducts] = useState([]);
-  const [quantity, setQuantity] = useState(1);
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
+  const BASE_URL_TOW =
+    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
 
   const findProducts = allProducts.filter(
     (item) => item.category === product.category && item._id !== product._id
@@ -16,9 +17,7 @@ const ProductDetails = () => {
 
   const fetchProduct = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product/${id}`
-      );
+      const response = await axios.get(`${BASE_URL_TOW}/${id}`);
       if (response.data) {
         setProduct(response.data.data);
       } else {
@@ -30,9 +29,7 @@ const ProductDetails = () => {
   };
   const fetchAllProducts = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product`
-      );
+      const response = await axios.get(`${BASE_URL_TOW}`);
       if (response.data) {
         setAllProducts(response.data.data);
       } else {

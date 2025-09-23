@@ -29,6 +29,9 @@ const Home = () => {
   const [sortOrder, setSortOrder] = useState("desc");
   const [priceRange, setPriceRange] = useState("all");
 
+  const BASE_URL_TOW =
+    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
+
   const productSlice = products.slice(0, 4);
 
   const fetchProducts = async ({
@@ -92,21 +95,18 @@ const Home = () => {
           backendSortBy = "createdAt";
       }
 
-      const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product`,
-        {
-          params: {
-            search: searchTerm,
-            category: categoryFilter !== "all" ? categoryFilter : undefined,
-            status: statusFilter !== "all" ? statusFilter : undefined,
-            brand: brandFilter !== "all" ? brandFilter : undefined,
-            minPrice: minPrice,
-            maxPrice: maxPrice,
-            sortBy: backendSortBy,
-            sortOrder: backendSortOrder,
-          },
-        }
-      );
+      const response = await axios.get(`${BASE_URL_TOW}`, {
+        params: {
+          search: searchTerm,
+          category: categoryFilter !== "all" ? categoryFilter : undefined,
+          status: statusFilter !== "all" ? statusFilter : undefined,
+          brand: brandFilter !== "all" ? brandFilter : undefined,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          sortBy: backendSortBy,
+          sortOrder: backendSortOrder,
+        },
+      });
       if (response.data) {
         setProducts(response.data.data);
       }

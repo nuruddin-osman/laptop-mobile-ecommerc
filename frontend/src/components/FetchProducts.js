@@ -18,6 +18,9 @@ const useProducts = (initialFilters = {}) => {
     ...initialFilters,
   });
 
+  const BASE_URL_TOW =
+    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
+
   const fetchProducts = async (customFilters = {}) => {
     const currentFilters = { ...filters, ...customFilters };
 
@@ -80,30 +83,27 @@ const useProducts = (initialFilters = {}) => {
           backendSortBy = "createdAt";
       }
 
-      const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product`,
-        {
-          params: {
-            search: currentFilters.searchTerm,
-            category:
-              currentFilters.categoryFilter !== "all"
-                ? currentFilters.categoryFilter
-                : undefined,
-            status:
-              currentFilters.statusFilter !== "all"
-                ? currentFilters.statusFilter
-                : undefined,
-            brand:
-              currentFilters.brandFilter !== "all"
-                ? currentFilters.brandFilter
-                : undefined,
-            minPrice: minPrice,
-            maxPrice: maxPrice,
-            sortBy: backendSortBy,
-            sortOrder: backendSortOrder,
-          },
-        }
-      );
+      const response = await axios.get(`${BASE_URL_TOW}`, {
+        params: {
+          search: currentFilters.searchTerm,
+          category:
+            currentFilters.categoryFilter !== "all"
+              ? currentFilters.categoryFilter
+              : undefined,
+          status:
+            currentFilters.statusFilter !== "all"
+              ? currentFilters.statusFilter
+              : undefined,
+          brand:
+            currentFilters.brandFilter !== "all"
+              ? currentFilters.brandFilter
+              : undefined,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          sortBy: backendSortBy,
+          sortOrder: backendSortOrder,
+        },
+      });
 
       if (response.data) {
         setProducts(response.data.data);

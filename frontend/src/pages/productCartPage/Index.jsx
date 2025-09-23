@@ -9,7 +9,7 @@ import {
 } from "../../featurs/slice/cartSlice";
 
 const Cart = () => {
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
   const dispatch = useDispatch();
   const { cartItems } = useSelector((state) => state.cart);
 

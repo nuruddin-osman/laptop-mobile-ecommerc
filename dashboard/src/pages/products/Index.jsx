@@ -34,7 +34,9 @@ const Products = () => {
   const [statsProduct, setStatsProduct] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
+  const BASE_URL_TOW =
+    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
 
   // Form state
   const [formData, setFormData] = useState({
@@ -125,9 +127,7 @@ const Products = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product/stats`
-      );
+      const response = await axios.get(`${BASE_URL_TOW}/stats`);
       if (response.data) {
         setStatsProduct(response.data.data);
       } else {
@@ -154,15 +154,11 @@ const Products = () => {
       const file = e.target.files[0];
       formData.append("image", file);
 
-      const response = await axios.post(
-        `http://localhost:4000/api/dashboard/product/upload`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post(`${BASE_URL_TOW}/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response.data.success) {
         setImageUrl(response.data.imageUrl);
@@ -237,21 +233,18 @@ const Products = () => {
           backendSortBy = "createdAt";
       }
 
-      const response = await axios.get(
-        `http://localhost:4000/api/dashboard/product`,
-        {
-          params: {
-            search: searchTerm,
-            category: categoryFilter !== "all" ? categoryFilter : undefined,
-            status: statusFilter !== "all" ? statusFilter : undefined,
-            brand: brandFilter !== "all" ? brandFilter : undefined,
-            minPrice: minPrice,
-            maxPrice: maxPrice,
-            sortBy: backendSortBy,
-            sortOrder: backendSortOrder,
-          },
-        }
-      );
+      const response = await axios.get(`${BASE_URL_TOW}`, {
+        params: {
+          search: searchTerm,
+          category: categoryFilter !== "all" ? categoryFilter : undefined,
+          status: statusFilter !== "all" ? statusFilter : undefined,
+          brand: brandFilter !== "all" ? brandFilter : undefined,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          sortBy: backendSortBy,
+          sortOrder: backendSortOrder,
+        },
+      });
       if (response.data) {
         setProducts(response.data.data);
       }
@@ -314,7 +307,7 @@ const Products = () => {
 
       if (editingProduct) {
         const response = await axios.put(
-          `http://localhost:4000/api/dashboard/product/${editingProduct._id}`,
+          `${BASE_URL_TOW}/${editingProduct._id}`,
           normalizedData
         );
         if (response.data.success) {
@@ -323,10 +316,7 @@ const Products = () => {
           alert(`Error: ${response.data.message}`);
         }
       } else {
-        const response = await axios.post(
-          `http://localhost:4000/api/dashboard/product`,
-          normalizedData
-        );
+        const response = await axios.post(`${BASE_URL_TOW}`, normalizedData);
         if (response.data.success) {
           alert("Product created successfully!");
         } else {
@@ -428,9 +418,7 @@ const Products = () => {
   // Handle delete product
   const handleDeleteProduct = async (id) => {
     try {
-      const response = await axios.delete(
-        `http://localhost:4000/api/dashboard/product/${id}`
-      );
+      const response = await axios.delete(`${BASE_URL_TOW}/${id}`);
       if (response.data) {
         alert("Delete success");
         // Refresh with current filters
