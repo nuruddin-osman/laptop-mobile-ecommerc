@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaLock } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
 
 const Checkout = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,9 @@ const Checkout = () => {
     nameOnCard: "",
   });
 
+  const BASE_URL = "http://localhost:4000";
+  const dispatch = useDispatch();
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -29,6 +33,16 @@ const Checkout = () => {
     // Handle form submission here
     alert("Order placed successfully!");
   };
+
+  const { cartItems } = useSelector((state) => state.cart);
+
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+  const shipping = subtotal > 0 ? 10 : 0;
+  const tax = subtotal * 0.1; // 10% tax
+  const total = subtotal + shipping + tax;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -255,32 +269,32 @@ const Checkout = () => {
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
 
             <div className="space-y-4 mb-6">
-              <div className="flex justify-between">
-                <span>MacBook Pro 16 × 1</span>
-                <span>$2399.00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>iPhone 14 Pro × 2</span>
-                <span>$1998.00</span>
-              </div>
+              {cartItems.map((item) => (
+                <div className="flex justify-between items-center">
+                  <span>
+                    {item.name} × {item.quantity}
+                  </span>
+                  <span>${item.price * item.quantity}</span>
+                </div>
+              ))}
             </div>
 
             <div className="border-t border-gray-200 pt-4 space-y-2 mb-6">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>$4397.00</span>
+                <span>${subtotal}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>$15.00</span>
+                <span>${shipping}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax</span>
-                <span>$439.70</span>
+                <span>${tax}</span>
               </div>
               <div className="flex justify-between font-semibold text-lg pt-2 border-t border-gray-200">
                 <span>Total</span>
-                <span>$4851.70</span>
+                <span>${total}</span>
               </div>
             </div>
           </div>
