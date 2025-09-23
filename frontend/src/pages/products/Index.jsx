@@ -2,87 +2,51 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { FaFilter } from "react-icons/fa";
 import ProductCard from "../../components/ProductCard";
+import useProducts from "../../components/FetchProducts";
 
 const Products = () => {
   const { category } = useParams();
   const [showFilters, setShowFilters] = useState(false);
 
-  // Sample products data
-  const allProducts = [
-    // Laptops
-    {
-      id: 1,
-      name: "MacBook Pro 16",
-      price: 2399,
-      rating: 4.5,
-      reviewCount: 132,
-      description: "Powerful laptop for professionals with M2 Pro chip",
-      image: "https://via.placeholder.com/300x200?text=MacBook+Pro",
-      category: "laptops",
-      brand: "Apple",
-    },
-    {
-      id: 2,
-      name: "Dell XPS 13",
-      price: 1299,
-      rating: 4.3,
-      reviewCount: 87,
-      description: "Ultra-thin laptop with InfinityEdge display",
-      image: "https://via.placeholder.com/300x200?text=Dell+XPS+13",
-      category: "laptops",
-      brand: "Dell",
-    },
-    {
-      id: 3,
-      name: "HP Spectre x360",
-      price: 1499,
-      rating: 4.2,
-      reviewCount: 64,
-      description: "Convertible laptop with premium design",
-      image: "https://via.placeholder.com/300x200?text=HP+Spectre",
-      category: "laptops",
-      brand: "HP",
-    },
-    // Mobiles
-    {
-      id: 4,
-      name: "iPhone 14 Pro",
-      price: 999,
-      rating: 4.8,
-      reviewCount: 245,
-      description: "Latest iPhone with Dynamic Island and 48MP camera",
-      image: "https://via.placeholder.com/300x200?text=iPhone+14+Pro",
-      category: "mobiles",
-      brand: "Apple",
-    },
-    {
-      id: 5,
-      name: "Samsung Galaxy S23",
-      price: 899,
-      rating: 4.6,
-      reviewCount: 156,
-      description: "Android flagship with powerful camera system",
-      image: "https://via.placeholder.com/300x200?text=Galaxy+S23",
-      category: "mobiles",
-      brand: "Samsung",
-    },
-    {
-      id: 6,
-      name: "Google Pixel 7",
-      price: 799,
-      rating: 4.4,
-      reviewCount: 98,
-      description: "Google's flagship with exceptional camera software",
-      image: "https://via.placeholder.com/300x200?text=Pixel+7",
-      category: "mobiles",
-      brand: "Google",
-    },
-  ];
+  const { products, loading, error, filters, updateFilters, refetch } =
+    useProducts({
+      categoryFilter: category || "all",
+      sortBy: "newest",
+    });
+  const categories = [...new Set(products.map((item) => item.category))];
+  const brands = [...new Set(products.map((item) => item.brand))];
 
-  // Filter products by category if specified
-  const filteredProducts = category
-    ? allProducts.filter((product) => product.category === category)
-    : allProducts;
+  const handleSearch = (searchTerm) => {
+    updateFilters({ searchTerm });
+  };
+  const handleBrand = (brandValue) => {
+    updateFilters({ brandFilter: brandValue });
+  };
+  const handlePrice = (priceValue) => {
+    updateFilters({ priceRange: priceValue });
+  };
+
+  const handleCategoryChange = (categoryValue) => {
+    updateFilters({ categoryFilter: categoryValue });
+  };
+  const handleRatingSort = (ratingValue) => {
+    updateFilters({ sortBy: ratingValue });
+  };
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    updateFilters({
+      searchTerm: "",
+      categoryFilter: "all",
+      brandFilter: "all",
+      priceRange: "all",
+      sortBy: "newest",
+      sortOrder: "desc",
+    });
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -100,7 +64,15 @@ const Products = () => {
           }`}
         >
           <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold mb-4">Filters</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold mb-4">Filters</h3>
+              <button
+                onClick={handleResetFilters}
+                className="text-sm text-white hover:bg-amber-700 bg-red-600 px-3 py-1.5 rounded-md cursor-pointer"
+              >
+                Filter Reset
+              </button>
+            </div>
 
             <div className="mb-4">
               <h4 className="font-medium mb-2">Category</h4>
@@ -108,49 +80,49 @@ const Products = () => {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
+                    name="category"
                     className="mr-2"
-                    defaultChecked={!category}
+                    checked={filters.categoryFilter === "all"}
+                    onChange={() => handleCategoryChange("all")}
                   />
                   All Products
                 </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-2"
-                    defaultChecked={category === "laptops"}
-                  />
-                  Laptops
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-2"
-                    defaultChecked={category === "mobiles"}
-                  />
-                  Mobiles
-                </label>
+                {categories?.map((item) => (
+                  <label key={item} className="flex items-center capitalize">
+                    <input
+                      type="checkbox"
+                      name="category"
+                      className="mr-2"
+                      checked={filters.categoryFilter === item}
+                      onChange={() => handleCategoryChange(item)}
+                    />
+                    {item}
+                  </label>
+                ))}
               </div>
             </div>
 
             <div className="mb-4">
               <h4 className="font-medium mb-2">Price Range</h4>
               <div className="space-y-2">
-                <label className="flex items-center">
-                  <input type="radio" name="price" className="mr-2" />
-                  Under $500
-                </label>
-                <label className="flex items-center">
-                  <input type="radio" name="price" className="mr-2" />
-                  $500 - $1000
-                </label>
-                <label className="flex items-center">
-                  <input type="radio" name="price" className="mr-2" />
-                  $1000 - $1500
-                </label>
-                <label className="flex items-center">
-                  <input type="radio" name="price" className="mr-2" />
-                  Over $1500
-                </label>
+                {[
+                  { value: "all", label: "All Prices" },
+                  { value: "0-500", label: "Under $500" },
+                  { value: "500-1000", label: "$500 - $1000" },
+                  { value: "1000-1500", label: "$1000 - $1500" },
+                  { value: "1500+", label: "Over $1500" },
+                ].map((price) => (
+                  <label key={price.value} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="price"
+                      className="mr-2"
+                      checked={filters.priceRange === price.value}
+                      onChange={() => handlePrice(price.value)}
+                    />
+                    {price.label}
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -158,25 +130,27 @@ const Products = () => {
               <h4 className="font-medium mb-2">Brand</h4>
               <div className="space-y-2">
                 <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  Apple
+                  <input
+                    type="checkbox"
+                    name="brand"
+                    className="mr-2"
+                    checked={filters.brandFilter === "all"}
+                    onChange={() => handleBrand("all")}
+                  />
+                  All Brand
                 </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  Samsung
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  Dell
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  HP
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  Google
-                </label>
+                {brands?.map((item) => (
+                  <label key={item} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="brand"
+                      className="mr-2"
+                      checked={filters.brandFilter === item}
+                      onChange={() => handleBrand(item)}
+                    />
+                    {item}
+                  </label>
+                ))}
               </div>
             </div>
           </div>
@@ -185,9 +159,7 @@ const Products = () => {
         {/* Products Grid */}
         <div className="md:w-3/4">
           <div className="flex justify-between items-center mb-6">
-            <p className="text-gray-600">
-              {filteredProducts.length} products found
-            </p>
+            <p className="text-gray-600">{products.length} products found</p>
             <button
               className="md:hidden flex items-center bg-blue-600 text-white py-2 px-4 rounded-md"
               onClick={() => setShowFilters(!showFilters)}
@@ -196,17 +168,21 @@ const Products = () => {
               Filters
             </button>
 
-            <select className="hidden md:block bg-white border border-gray-300 rounded-md py-2 px-4">
-              <option>Sort by: Recommended</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-              <option>Rating: High to Low</option>
+            <select
+              value={filters.sortBy}
+              onChange={(e) => handleRatingSort(e.target.value)}
+              className="hidden md:block bg-white border border-gray-300 rounded-md py-2 px-4"
+            >
+              <option value="all">Sort by: All</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating-high">Rating: High to Low</option>
             </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
             ))}
           </div>
         </div>

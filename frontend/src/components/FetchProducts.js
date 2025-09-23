@@ -72,6 +72,10 @@ const useProducts = (initialFilters = {}) => {
           backendSortBy = "price";
           backendSortOrder = "asc";
           break;
+        case "rating-high":
+          backendSortBy = "rating";
+          backendSortOrder = "desc";
+          break;
         default:
           backendSortBy = "createdAt";
       }
