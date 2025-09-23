@@ -1,9 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaStar, FaShoppingCart } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../featurs/slice/cartSlice";
 
 const ProductCard = ({ product }) => {
   const BASE_URL = "http://localhost:4000";
+
+  const dispatch = useDispatch();
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <Link to={`/product/${product._id}`}>
@@ -39,7 +44,10 @@ const ProductCard = ({ product }) => {
           <span className="text-2xl font-bold text-blue-600">
             ${product.price}
           </span>
-          <button className="bg-blue-600 text-white py-2 px-4 rounded-full flex items-center hover:bg-blue-700 transition-colors">
+          <button
+            onClick={() => dispatch(addToCart(product))}
+            className="bg-[#f57224] text-white py-2 px-4 rounded-full flex items-center hover:bg-[#d0611e] transition-colors cursor-pointer"
+          >
             <FaShoppingCart className="mr-2" />
             Add to Cart
           </button>

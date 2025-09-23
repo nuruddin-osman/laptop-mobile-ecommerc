@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Logo from "./../assets/images/logo/nLogo.png";
 import {
@@ -12,6 +12,7 @@ import {
   FaPhoneAlt,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { useSelector } from "react-redux";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,6 +40,12 @@ const Header = () => {
       setIsSearchOpen(false);
     }
   };
+
+  const { cartItems } = useSelector((state) => state.cart);
+  const totalQuantity = cartItems?.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
   return (
     <>
@@ -151,9 +158,9 @@ const Header = () => {
                 to="/cart"
                 className="text-gray-600 hover:text-blue-600 relative"
               >
-                <FaShoppingCart size={18} />
-                <span className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                  2
+                <FaShoppingCart size={36} />
+                <span className="absolute -top-2 -right-2 bg-[#f57224] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs">
+                  {totalQuantity}
                 </span>
               </Link>
             </div>
@@ -283,8 +290,8 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <FaShoppingCart className="mr-2" /> কার্ট
-                  <span className="ml-2 bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                    2
+                  <span className="ml-2 bg-[#f57224] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                    {totalQuantity}
                   </span>
                 </Link>
 

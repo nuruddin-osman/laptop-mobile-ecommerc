@@ -9,7 +9,6 @@ import Checkout from "./pages/checkout/Index";
 import AccountPage from "./pages/account/Index";
 import AboutPage from "./pages/about/Index";
 import ContactPage from "./pages/contact/Index";
-import Drupt from "./components/Drupt";
 import { store } from "./featurs/store";
 import { Provider } from "react-redux";
 
@@ -55,10 +54,10 @@ const App = () => {
           path: "/contact",
           element: <ContactPage />,
         },
-        {
-          path: "/d",
-          element: <Drupt />,
-        },
+        // {
+        //   path: "/d",
+        //   element: <Drupt />,
+        // },
       ],
     },
   ]);

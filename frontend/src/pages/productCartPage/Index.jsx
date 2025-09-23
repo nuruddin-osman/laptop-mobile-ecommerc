@@ -1,45 +1,23 @@
-import React from "react";
+import React, { use } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus, FaMinus, FaTrash } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addToCart,
+  decreaseQty,
+  removeFromCart,
+} from "../../featurs/slice/cartSlice";
 
 const Cart = () => {
-  // Sample cart data
-  const [cartItems, setCartItems] = React.useState([
-    {
-      id: 1,
-      name: "MacBook Pro 16",
-      price: 2399,
-      quantity: 1,
-      image: "https://via.placeholder.com/100x100?text=MacBook+Pro",
-    },
-    {
-      id: 4,
-      name: "iPhone 14 Pro",
-      price: 999,
-      quantity: 2,
-      image: "https://via.placeholder.com/100x100?text=iPhone+14+Pro",
-    },
-  ]);
-
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
-  };
+  const BASE_URL = "http://localhost:4000";
+  const dispatch = useDispatch();
+  const { cartItems } = useSelector((state) => state.cart);
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
-  const shipping = subtotal > 0 ? 15 : 0;
+  const shipping = subtotal > 0 ? 10 : 0;
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + shipping + tax;
 
@@ -74,20 +52,20 @@ const Cart = () => {
 
               {cartItems.map((item) => (
                 <div
-                  key={item.id}
+                  key={item._id}
                   className="grid grid-cols-12 gap-4 border-b border-gray-200 p-4 items-center"
                 >
                   <div className="col-span-12 md:col-span-6 flex items-center">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={`${BASE_URL}${item.image[0]?.url}`}
+                      alt={item.image[0]?.alt}
                       className="w-16 h-16 object-contain mr-4"
                     />
                     <div>
                       <h3 className="font-semibold">{item.name}</h3>
                       <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-500 flex items-center text-sm mt-1"
+                        onClick={() => dispatch(removeFromCart(item._id))}
+                        className="text-red-500 flex items-center text-sm mt-1 cursor-pointer"
                       >
                         <FaTrash className="mr-1" size={12} />
                         Remove
@@ -103,21 +81,17 @@ const Cart = () => {
                   <div className="col-span-4 md:col-span-2 flex justify-center">
                     <div className="flex items-center border border-gray-300 rounded-md">
                       <button
-                        className="px-2 py-1 text-gray-600"
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity - 1)
-                        }
+                        className="px-2 py-1 text-gray-600 cursor-pointer"
+                        onClick={() => dispatch(decreaseQty(item._id))}
                       >
-                        <FaMinus size={12} />
+                        <FaMinus size={16} />
                       </button>
                       <span className="px-3 py-1">{item.quantity}</span>
                       <button
-                        className="px-2 py-1 text-gray-600"
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
-                        }
+                        className="px-2 py-1 text-gray-600 cursor-pointer"
+                        onClick={() => dispatch(addToCart(item))}
                       >
-                        <FaPlus size={12} />
+                        <FaPlus size={16} />
                       </button>
                     </div>
                   </div>
@@ -155,7 +129,7 @@ const Cart = () => {
                   <span>${shipping.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Tax</span>
+                  <span>Tax (10%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
               </div>
