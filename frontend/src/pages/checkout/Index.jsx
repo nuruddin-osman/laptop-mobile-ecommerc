@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaLock } from "react-icons/fa";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 const Checkout = () => {
   const [formData, setFormData] = useState({
@@ -16,9 +16,6 @@ const Checkout = () => {
     cvv: "",
     nameOnCard: "",
   });
-
-  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
-  const dispatch = useDispatch();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

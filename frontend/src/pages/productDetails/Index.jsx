@@ -7,9 +7,8 @@ const ProductDetails = () => {
   const { id } = useParams();
   const [product, setProduct] = useState({});
   const [allProducts, setAllProducts] = useState([]);
-  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
-  const BASE_URL_TOW =
-    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
+  const BASE_URL = import.meta.env.VITE_API_URL;
+  const BASE_URL_TOW = `${import.meta.env.VITE_API_URL}/api/dashboard/product`;
 
   const findProducts = allProducts.filter(
     (item) => item.category === product.category && item._id !== product._id

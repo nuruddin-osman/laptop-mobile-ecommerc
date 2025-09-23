@@ -9,7 +9,8 @@ import {
 } from "../../featurs/slice/cartSlice";
 
 const Cart = () => {
-  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
+  const BASE_URL = import.meta.env.VITE_API_URL;
+
   const dispatch = useDispatch();
   const { cartItems } = useSelector((state) => state.cart);
 

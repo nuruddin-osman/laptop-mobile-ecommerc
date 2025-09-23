@@ -18,8 +18,7 @@ const useProducts = (initialFilters = {}) => {
     ...initialFilters,
   });
 
-  const BASE_URL_TOW =
-    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
+  const BASE_URL_TOW = `${import.meta.env.VITE_API_URL}/api/dashboard/product`;
 
   const fetchProducts = async (customFilters = {}) => {
     const currentFilters = { ...filters, ...customFilters };

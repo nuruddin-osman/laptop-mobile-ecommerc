@@ -34,9 +34,8 @@ const Products = () => {
   const [statsProduct, setStatsProduct] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  const BASE_URL = "https://laptop-mobile-ecommerc.onrender.com";
-  const BASE_URL_TOW =
-    "https://laptop-mobile-ecommerc.onrender.com/api/dashboard/product";
+  const BASE_URL = import.meta.env.VITE_API_URL;
+  const BASE_URL_TOW = `${import.meta.env.VITE_API_URL}/api/dashboard/product`;
 
   // Form state
   const [formData, setFormData] = useState({
