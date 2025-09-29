@@ -7,6 +7,7 @@ const path = require("path");
 
 // const headerRoute = require("./routes/headers/headers.routes");
 const dashboardProductRoute = require("./routes/dashboard/product.route");
+const authRoutes = require("./routes/auth/auth.routes");
 
 // Middleware
 app.use(cors());
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/dashboard/product", dashboardProductRoute);
+app.use("/api", authRoutes);
 
 // Not Found Handler
 app.use((req, res, next) => {
