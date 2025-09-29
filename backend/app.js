@@ -2,7 +2,9 @@
 const express = require("express");
 const app = express();
 require("./config/database");
+require("./config/passport");
 const cors = require("cors");
+const passport = require("passport");
 const path = require("path");
 
 // const headerRoute = require("./routes/headers/headers.routes");
@@ -13,6 +15,7 @@ const authRoutes = require("./routes/auth/auth.routes");
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(passport.initialize());
 
 // Routes
 app.get("/", (req, res) => {

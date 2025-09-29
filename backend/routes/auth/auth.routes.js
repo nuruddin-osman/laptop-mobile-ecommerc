@@ -4,6 +4,7 @@ const saltRounds = 10;
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 require("dotenv").config();
 
 router.post("/register", async (req, res) => {
@@ -100,5 +101,30 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+router.get(
+  "/profile",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    try {
+      const userId = req.user?._conditions?._id || req.user?._id;
+
+      const passwordLessUser = await User.findById(userId)
+        .select("-password")
+        .lean();
+
+      res.status(200).json({
+        status: true,
+        message: "Profile protected successfully",
+        user: passwordLessUser,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: false,
+        message: error,
+      });
+    }
+  }
+);
 
 module.exports = router;
