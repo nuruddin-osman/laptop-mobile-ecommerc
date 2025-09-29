@@ -5,6 +5,9 @@ import Laptop_01 from "../../assets/images/laptop/laptop-img01.png";
 import Laptop_02 from "../../assets/images/laptop/laptop-img02.png";
 import Laptop_03 from "../../assets/images/laptop/laptop-img03.png";
 import Laptop_04 from "../../assets/images/laptop/laptop-img04.png";
+import laptop_banner_01 from "../../assets/images/laptop/laptop_banner_01.jpg";
+import laptop_banner_02 from "../../assets/images/laptop/laptop_banner_02.jpg";
+import laptop_banner_03 from "../../assets/images/laptop/laptop_banner_03.jpg";
 
 // Import Swiper styles and modules
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -198,49 +201,31 @@ const Home = () => {
       id: 1,
       title: "Latest Tech Gadgets",
       subtitle: "Discover the newest technology at amazing prices",
-      image:
-        Laptop_01 ||
-        "https://images.unsplash.com/photo-1498049794561-7780e7231661?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+      image: laptop_banner_01,
       buttonText: "Shop Now",
       buttonLink: "/products",
       textColor: "text-white",
-      overlay: "bg-black bg-opacity-50",
+      overlay: "bg-black/30",
     },
     {
       id: 2,
       title: "Summer Sale Up to 30% Off",
       subtitle: "Special discounts on laptops and mobile phones",
-      image:
-        Laptop_02 ||
-        "https://images.unsplash.com/photo-1468436139062-f60a71c5c892?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+      image: laptop_banner_02,
       buttonText: "View Offers",
       buttonLink: "/products?discount=true",
       textColor: "text-white",
-      overlay: "bg-blue-900 bg-opacity-60",
+      overlay: "bg-black/30",
     },
     {
       id: 3,
       title: "Premium Quality Laptops",
       subtitle: "Experience the power of next-generation computing",
-      image:
-        Laptop_03 ||
-        "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1442&q=80",
+      image: laptop_banner_03,
       buttonText: "Explore Laptops",
       buttonLink: "/products/laptops",
       textColor: "text-white",
-      overlay: "bg-purple-900 bg-opacity-60",
-    },
-    {
-      id: 4,
-      title: "New Mobile Collection",
-      subtitle: "Latest smartphones with advanced features",
-      image:
-        Laptop_04 ||
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1480&q=80",
-      buttonText: "Browse Mobiles",
-      buttonLink: "/products/mobiles",
-      textColor: "text-white",
-      overlay: "bg-gray-900 bg-opacity-60",
+      overlay: "bg-black/30",
     },
   ];
 
@@ -260,7 +245,7 @@ const Home = () => {
           spaceBetween={0}
           centeredSlides={true}
           autoplay={{
-            delay: 5000,
+            delay: 500000,
             disableOnInteraction: false,
           }}
           pagination={{

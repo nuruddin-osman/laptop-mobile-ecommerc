@@ -13,6 +13,9 @@ import { store } from "./featurs/store";
 import { Provider } from "react-redux";
 import Register from "./pages/register/Index";
 import Login from "./pages/login/Index";
+import ProtectedRoute from "./components/ProtectedRoutes";
+import Wishlist from "./pages/wishlist/Index";
+import Orders from "./pages/orders/Index";
 
 const App = () => {
   let router = createBrowserRouter([
@@ -41,14 +44,6 @@ const App = () => {
           element: <Cart />,
         },
         {
-          path: "/checkout",
-          element: <Checkout />,
-        },
-        {
-          path: "/account",
-          element: <AccountPage />,
-        },
-        {
           path: "/about",
           element: <AboutPage />,
         },
@@ -56,11 +51,39 @@ const App = () => {
           path: "/contact",
           element: <ContactPage />,
         },
-        // {
-        //   path: "/d",
-        //   element: <Drupt />,
-        // },
       ],
+    },
+    {
+      path: "/account",
+      element: (
+        <ProtectedRoute>
+          <AccountPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/account",
+      element: (
+        <ProtectedRoute>
+          <AccountPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/wishlist",
+      element: (
+        <ProtectedRoute>
+          <Wishlist />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/orders",
+      element: (
+        <ProtectedRoute>
+          <Orders />
+        </ProtectedRoute>
+      ),
     },
     {
       path: "/register",

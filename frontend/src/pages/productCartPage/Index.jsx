@@ -1,5 +1,5 @@
 import React, { use } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaPlus, FaMinus, FaTrash } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -10,6 +10,7 @@ import {
 
 const Cart = () => {
   const BASE_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
 
   const dispatch = useDispatch();
   const { cartItems } = useSelector((state) => state.cart);
@@ -21,6 +22,15 @@ const Cart = () => {
   const shipping = subtotal > 0 ? 10 : 0;
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + shipping + tax;
+
+  const handleAuth = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/checkout");
+    } else {
+      navigate("/login", { state: { from: "/checkout" } });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -142,12 +152,12 @@ const Cart = () => {
                 </div>
               </div>
 
-              <Link
-                to="/checkout"
-                className="block w-full bg-blue-600 text-white text-center py-3 rounded-md hover:bg-blue-700 font-semibold"
+              <button
+                onClick={handleAuth}
+                className="w-full bg-blue-600 text-white text-center py-3 rounded-md hover:bg-blue-700 font-semibold cursor-pointer"
               >
                 Proceed to Checkout
-              </Link>
+              </button>
             </div>
           </div>
         </div>
