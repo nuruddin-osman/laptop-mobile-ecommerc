@@ -11,6 +11,7 @@ import AboutPage from "./pages/about/Index";
 import ContactPage from "./pages/contact/Index";
 import { store } from "./featurs/store";
 import { Provider } from "react-redux";
+import Register from "./pages/register/Index";
 
 const App = () => {
   let router = createBrowserRouter([
@@ -59,6 +60,10 @@ const App = () => {
         //   element: <Drupt />,
         // },
       ],
+    },
+    {
+      path: "/register",
+      element: <Register />,
     },
   ]);
 
